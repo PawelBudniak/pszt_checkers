@@ -13,4 +13,5 @@ def print_hi(name):
 if __name__ == '__main__':
     brd = checkers.Board()
     brd.display()
+    print(brd.is_legal_move((2, 1), (5, 4), False))
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
