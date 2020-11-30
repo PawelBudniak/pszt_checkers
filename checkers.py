@@ -16,15 +16,57 @@ class Board:
                       for j in range(self.BOARD_SIZE)]
         self.init_board()
 
-    def move(self, player, from_yx, to_yx):
+    def move(self, player, from_yx, to_yx, move_in_progress):
         # miki
-        if self.is_legal_move(player, from_yx, to_yx):
-            pass
+
+        if not self.is_legal_move(player, from_yx, to_yx, move_in_progress):
+            print("Error, wrong move")
+            return
+        from_piece = self.board[from_yx[0]][from_yx[1]]
+        if from_piece.is_king:
+            # captured piece coordinates
+            x = -1
+            y = -1
+            # calculating the horizontal direction from->end to check for capturing/movement
+            if from_yx[0] > to_yx[0] < 0:
+                dy = -1
+            else:
+                dy = 1
+            # calculating the vertical direction from->end to check for capturing/movement
+            if from_yx[1] - to_yx[1] > 0:
+                dx = -1
+            else:
+                dx = 1
+            # count of seen objects with the opposite color
+            # offset from the beginning coordinates
+            t = dy
+            c = dx
+            # while we've not met the ending point:
+            while from_yx[0] + t != to_yx[0] and from_yx[1] + c != to_yx[1]:
+                # if we came across a piece:
+                if self.board[from_yx[0] + t][from_yx[1] + c] is not None:
+                    x = from_yx[1] + c
+                    y = from_yx[0] + t
+                    break
+                t += dy
+                c += dx
+            if x != -1:
+                self.board[y][x] = None
+        elif not from_piece.is_king:
+            if abs(to_yx[0] - from_yx[0]) == 2:
+                self.board[average(to_yx[0], from_yx[0])][average(to_yx[1], from_yx[1])] = None
+        self.board[to_yx[0]][to_yx[1]], self.board[from_yx[0]][from_yx[1]] = self.board[from_yx[0]][from_yx[1]], \
+                                                                             self.board[to_yx[0]][to_yx[1]]
+        if from_piece.is_white and to_yx[0] == 0 or (not from_piece.is_white) and to_yx[0] == self.BOARD_SIZE-1:
+            from_piece.is_king = True
 
     # check if the move is legal when regarding game's rules
-    def is_legal_move(self, from_yx, to_yx, move_in_progress):
+    def is_legal_move(self, player, from_yx, to_yx, move_in_progress):
         # miki
         from_piece = self.board[from_yx[0]][from_yx[1]]
+        # case: piece not destined for given player
+        if not from_piece.is_white == player.is_white:
+            return False
         # case: out of board bounds
         if from_piece is None:
             return False
@@ -51,18 +93,18 @@ class Board:
             # count of seen objects with the opposite color
             count = 0
             # offset from the beginning coordinates
-            t = 0
-            c = 0
+            t = dy
+            c = dx
             # while we've not met the ending point:
-            while from_yx[0]+t != to_yx[0] and from_yx[1] + c != to_yx[1]:
+            while from_yx[0] + t != to_yx[0] and from_yx[1] + c != to_yx[1]:
                 # if we came across a piece:
-                if self.board[from_yx[0]+t][from_yx[1]+c] is not None:
+                if self.board[from_yx[0] + t][from_yx[1] + c] is not None:
                     # if it is the same color as the piece we are moving with:
-                    if self.board[from_yx[0]+t][from_yx[1]+c].is_white == from_piece.is_white and t != 0:
+                    if self.board[from_yx[0] + t][from_yx[1] + c].is_white == from_piece.is_white and t != 0:
                         return False
                     # else, it must be the enemies piece
                     else:
-                        ++count
+                        count += 1
                 if count > 1:
                     return False
                 t += dy
@@ -111,6 +153,10 @@ class Board:
         fill_row(self.BOARD_SIZE - 1, 0, is_white=True)
         fill_row(self.BOARD_SIZE - 2, 1, is_white=True)
         fill_row(self.BOARD_SIZE - 3, 0, is_white=True)
+        self.board[2][1] = Piece(False, False, 2, 1)
+        self.board[3][2] = Piece(True, False, 3, 2)
+        #self.board[4][3] = Piece(True, False, 4, 3)
+        self.board[5][4] = None
 
     def get_king(self, player, yx):
         pass
@@ -172,8 +218,8 @@ class Piece:
 
 class Player:
 
-    def __init__(self, board):
-        self.board = board
+    def __init__(self, is_white):
+        self.is_white = is_white
 
     def get_move(self):
         pass
