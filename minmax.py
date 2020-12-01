@@ -1,5 +1,6 @@
 import checkers
 import copy
+import math
 
 
 class MinmaxAI(checkers.Player):
@@ -16,7 +17,7 @@ class MinmaxAI(checkers.Player):
                 best_move = move
         return best_move
 
-    def minmax_score(self, board, current_player, opponent, depth, alfa, beta):
+    def minmax_score(self, board, current_player, opponent, depth, alpha, beta):
         # white is the maximizer
 
         # przekazywanie wszedzie player i opponent dosc brzydkie wiec jesli board trzyma czyja tura to bym tego uzywal pozniej
@@ -30,28 +31,34 @@ class MinmaxAI(checkers.Player):
         elif depth == 0:
             return self.heuristic(board, current_player, opponent)
 
-        # to musze dostosowac z kolka i krzyzyk na alfe bete ale to zajmie 10 sekund chyba
-
-        scores = []
-        for move in board.available_moves():
-            temp_board = copy.deepcopy(board)
-            temp_board.place_symbol(current_player, *move)
-            if current_player.is_white():
-                scores.append(self.minimax_score(temp_board, opponent, current_player, depth - 1))
-            else:
-                scores.append(self.minimax_score(temp_board, current_player, opponent, depth - 1))
-
-
         if current_player.is_white():
-            return max(scores)
+            max_score = -math.inf
+            for move in board.available_full_moves():
+                temp_board = copy.deepcopy(board)
+                temp_board.full_move(current_player, move)
+                score = self.minmax_score(self, temp_board, opponent, current_player, depth - 1, alpha, beta)
+                max_score = max(score, max_score)
+                alpha = max(alpha, max_score)
+                if beta <= alpha:
+                    break
+            return max_score
         else:
-            return min(scores)
+            min_score = math.inf
+            for move in board.available_full_moves():
+                temp_board = copy.deepcopy(board)
+                temp_board.full_move(current_player, move)
+                score = self.minmax_score(self, temp_board, opponent, current_player, depth - 1, alpha, beta)
+                min_score = min(score, min_score)
+                beta = min(alpha, min_score)
+                if beta <= alpha:
+                    break
+            return min_score
 
     def heuristic(self, board, current_player, opponent, man_val=1, king_val=3):
         # player_score, opponent_score = 0
 
-        current_player_score = self.get_score(current_player, board,  man_val, king_val)
-        opponent_score = self.get_score(opponent, board,  man_val, king_val)
+        current_player_score = self.get_score(current_player, board, man_val, king_val)
+        opponent_score = self.get_score(opponent, board, man_val, king_val)
 
         score = abs(current_player_score - opponent_score)
         # return negative value if the current player is black (the minimizer)

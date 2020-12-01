@@ -1,21 +1,10 @@
 from enum import Enum
 import copy
 
-def average(x, y):
-    return int((x + y) / 2)
-
-
-def sgn(x):
-    if x > 0:
-        return 1
-    elif x < 0:
-        return -1
-    else:
-        return 0
+from helper import *
 
 
 class Board:
-
     BOARD_SIZE = 8
     PIECES_COUNT = 12
 
@@ -44,6 +33,7 @@ class Board:
                 self.board = board
                 print("Player required to capture, wrong move")
                 return False
+            # player can move multiple times only when capturing
             if x == self.score and chosen_path:
                 print("Too many move choices, wrong move")
                 self.board = board
@@ -67,6 +57,7 @@ class Board:
             if not move_analysis[0]:
                 return False
             else:
+                # if a single piece was captured
                 if move_analysis[1] is not None and move_analysis[2] == 1:
                     self.board[move_analysis[1][0]][move_analysis[1][1]] = None
                     if player.is_white:
@@ -82,9 +73,15 @@ class Board:
                     self.score[1] -= 1
         self.board[to_yx[0]][to_yx[1]], self.board[from_yx[0]][from_yx[1]] = self.board[from_yx[0]][from_yx[1]], \
                                                                              self.board[to_yx[0]][to_yx[1]]
-        if from_piece.is_white and to_yx[0] == 0 or (not from_piece.is_white) and to_yx[0] == self.BOARD_SIZE - 1:
-            from_piece.is_king = True
+        # if from_piece.is_white and to_yx[0] == 0 or (not from_piece.is_white) and to_yx[0] == self.BOARD_SIZE - 1:
+        #     from_piece.is_king = True
+        self._try_king(player, to_yx)
         return True  # successful action
+
+    def _execute_move(self, from_yx, to_yx):
+        self.board[to_yx[0]][to_yx[1]] = self.board[from_yx[0]][from_yx[1]]
+        self.board[from_yx[0]][from_yx[1]] = None
+
 
     # check if this move is a capture
     def is_legal_capture(self, player, from_yx, to_yx):
@@ -127,7 +124,7 @@ class Board:
     # check basic game constraints
     def _is_within_constraints(self, player, from_yx, to_yx):
 
-        if to_yx[0] not in range(self.BOARD_SIZE) or to_yx[1] not in range(self.BOARD_SIZE) or\
+        if to_yx[0] not in range(self.BOARD_SIZE) or to_yx[1] not in range(self.BOARD_SIZE) or \
                 from_yx[0] not in range(self.BOARD_SIZE) or from_yx[1] not in range(self.BOARD_SIZE):
             return False
         from_piece = self.board[from_yx[0]][from_yx[1]]
@@ -244,6 +241,16 @@ class Board:
         print(move_list)
         return move_list
 
+    def available_full_moves(self, player):
+        full_moves = []
+        for piece in player.get_pieces():
+            captures = self.available_captures(player, piece.y, piece.x) # TODO: pilnowac piece.y i piece.x
+            full_move = []
+            for capture in captures:
+                pass
+
+
+
     # list all available captures
     def available_captures(self, player, from_yx):
         move_list = []
@@ -269,8 +276,22 @@ class Board:
         fill_row(self.BOARD_SIZE - 2, 1, is_white=True)
         fill_row(self.BOARD_SIZE - 3, 0, is_white=True)
 
-    def get_king(self, player, yx):
-        pass
+    def _get_king(self, player, yx):
+        self.board[yx[0]][yx[1]].is_king = True
+
+    def _try_king(self, player, yx):
+        if (player.is_white and yx[0] == 0 or
+                not player.is_white and yx[0] == self.BOARD_SIZE - 1):
+            self._get_king(self, player, yx)
+
+    def get_pieces(self, player):
+        pieces = []
+        for y in self.board:
+            for x in self.board:
+                tmp_piece = self.board[y][x]
+                if tmp_piece is not None and tmp_piece.is_white == player.is_white:
+                    pieces.append(tmp_piece)
+        return pieces
 
     def display(self):
 
@@ -326,11 +347,14 @@ class Player:
         self.is_white = is_white
 
     def get_move(self, board):
-        x = input("Is white = " + str(self.is_white) + "\nEnter coordinates: <from_y> <from_x> <to_y> <to_x>").split()
-        result = []
-        for i in range(len(x)):
-            result.append(int(x[i]))
+        moves = input(
+            "Is white = " + str(self.is_white) + "\nEnter coordinates: <from_y> <from_x> <to_y> <to_x>").split()
+        result = [int(x) for x in moves]  # albo result = list(map(int, moves))
         return result
+
+    def get_pieces(self, board):
+        return board.get_pieces(self)
+
 
 class MinmaxAI(Player):
 
