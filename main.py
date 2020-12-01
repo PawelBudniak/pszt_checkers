@@ -13,6 +13,7 @@ def print_hi(name):
 if __name__ == '__main__':
     brd = checkers.Board()
     brd.debug = True
+    brd.board[3][2] = checkers.Piece(3, 2, True, is_king=False)
     player1 = checkers.Player(is_white=True)
     player2 = checkers.Player(is_white=False)
     running = True

@@ -103,8 +103,6 @@ class Board:
     # check if the move is legal when regarding game's rules
     def is_legal_move(self, player, from_yx, to_yx):
         # miki
-
-
         if self._is_within_constraints(player, from_yx, to_yx):
             from_piece = self.board[from_yx[0]][from_yx[1]]
             if from_piece.is_king:
@@ -214,10 +212,10 @@ class Board:
 
         if abs(delta_y) == 2:
             if self.board[average(to_yx[0], from_yx[0])][average(to_yx[1], from_yx[1])] is None:
-                return False
+                return False, None
             if self.board[average(to_yx[0], from_yx[0])][average(to_yx[1], from_yx[1])].is_white == \
                     from_piece.is_white:
-                return False
+                return False, None
             # if the move is too long in range ( not moving by one step and not capturing )
             else:
                 return True, (average(to_yx[0], from_yx[0]), average(to_yx[1], from_yx[1]))
