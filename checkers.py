@@ -18,7 +18,6 @@ class Board:
 
     def move(self, player, from_yx, to_yx, move_in_progress):
         # miki
-
         if not self.is_legal_move(player, from_yx, to_yx, move_in_progress):
             print("Error, wrong move")
             return
@@ -135,9 +134,15 @@ class Board:
                 return False
         return True
 
-    def available_moves(self, piece):
-        # miki
-        pass
+    # no clue
+    def available_moves(self, player, from_yx, move_in_progress):
+        move_list = []
+        for row in range(self.BOARD_SIZE):
+            for el in range(self.BOARD_SIZE):
+                if self.is_legal_move(player, from_yx, (row, el), move_in_progress):
+                    move_list.append((row, el))
+        print(move_list)
+        return move_list
 
     def init_board(self):
         def fill_row(row, start, is_white):
@@ -153,7 +158,7 @@ class Board:
         fill_row(self.BOARD_SIZE - 1, 0, is_white=True)
         fill_row(self.BOARD_SIZE - 2, 1, is_white=True)
         fill_row(self.BOARD_SIZE - 3, 0, is_white=True)
-        self.board[2][1] = Piece(False, False, 2, 1)
+        self.board[2][1] = Piece(False, True, 2, 1)
         self.board[3][2] = Piece(True, False, 3, 2)
         #self.board[4][3] = Piece(True, False, 4, 3)
         self.board[5][4] = None

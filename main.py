@@ -14,6 +14,7 @@ if __name__ == '__main__':
     brd = checkers.Board()
     player = checkers.Player(False)
     brd.display()
+    brd.available_moves(player, (2, 1), False)
     brd.move(player, (2, 1), (4, 3), False)
     brd.display()
     #print(brd.is_legal_move((2, 1), (5, 4), False))
