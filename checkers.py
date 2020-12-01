@@ -33,7 +33,7 @@ class Board:
         move_from = (chosen_path.pop(0), chosen_path.pop(0))
         move_to = (chosen_path.pop(0), chosen_path.pop(0))
 
-        should_capture = len(self.available_captures(move_from, move_to)) > 0
+        should_capture = len(self.available_captures(player, move_from)) > 0
 
         while processing:
             x = self.score.copy()
@@ -89,10 +89,10 @@ class Board:
     # check if this move is a capture
     def is_legal_capture(self, player, from_yx, to_yx):
         # miki
-        from_piece = self.board[from_yx[0]][from_yx[1]]
         captured_piece = None
 
         if self._is_within_constraints(player, from_yx, to_yx):
+            from_piece = self.board[from_yx[0]][from_yx[1]]
             if from_piece.is_king:
                 # handle king behavior
                 return self._is_king_legal_capture(from_yx, to_yx)
@@ -103,9 +103,10 @@ class Board:
     # check if the move is legal when regarding game's rules
     def is_legal_move(self, player, from_yx, to_yx):
         # miki
-        from_piece = self.board[from_yx[0]][from_yx[1]]
+
 
         if self._is_within_constraints(player, from_yx, to_yx):
+            from_piece = self.board[from_yx[0]][from_yx[1]]
             if from_piece.is_king:
                 # handle king behavior
                 return self._is_king_legal_move(from_yx, to_yx), None
@@ -115,9 +116,9 @@ class Board:
 
     def is_legal_action(self, player, from_yx, to_yx):
         # miki
-        from_piece = self.board[from_yx[0]][from_yx[1]]
 
         if self._is_within_constraints(player, from_yx, to_yx):
+            from_piece = self.board[from_yx[0]][from_yx[1]]
             if from_piece.is_king:
                 # handle king behavior
                 return self._is_king_legal_action(from_yx, to_yx)
@@ -127,6 +128,10 @@ class Board:
 
     # check basic game constraints
     def _is_within_constraints(self, player, from_yx, to_yx):
+
+        if to_yx[0] not in range(self.BOARD_SIZE) or to_yx[1] not in range(self.BOARD_SIZE) or\
+                from_yx[0] not in range(self.BOARD_SIZE) or from_yx[1] not in range(self.BOARD_SIZE):
+            return False
         from_piece = self.board[from_yx[0]][from_yx[1]]
         # case: out of board bounds
         if from_piece is None:
@@ -134,8 +139,7 @@ class Board:
         # case: piece not destined for given player
         if not from_piece.is_white == player.is_white:
             return False
-        if to_yx[0] not in range(self.BOARD_SIZE) or to_yx[1] not in range(self.BOARD_SIZE):
-            return False
+
         # case: piece cannot move like that because the x-travel distance must be equal to the y-travel distance
         if abs(to_yx[0] - from_yx[0]) != abs(to_yx[1] - from_yx[1]):
             return False
