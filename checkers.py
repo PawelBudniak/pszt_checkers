@@ -5,16 +5,23 @@ def average(x, y):
     return int((x + y) / 2)
 
 
+def sgn(x):
+    if x > 0:
+        return 1
+    elif x < 0:
+        return -1
+    else:
+        return 0
+
+
 class Board:
     BOARD_SIZE = 8
-
-    # 1 - kazdy z graczy ma  liste pionkow (typ, (koordy))
-    # 2 - na boardzie stawiam se obiekty Piece w danym miejscu i essa
 
     def __init__(self):
         self.board = [[None for i in range(self.BOARD_SIZE)]
                       for j in range(self.BOARD_SIZE)]
         self.init_board()
+        self.debug = False
 
     def move(self, player, from_yx, to_yx, move_in_progress):
         # miki
@@ -56,7 +63,7 @@ class Board:
                 self.board[average(to_yx[0], from_yx[0])][average(to_yx[1], from_yx[1])] = None
         self.board[to_yx[0]][to_yx[1]], self.board[from_yx[0]][from_yx[1]] = self.board[from_yx[0]][from_yx[1]], \
                                                                              self.board[to_yx[0]][to_yx[1]]
-        if from_piece.is_white and to_yx[0] == 0 or (not from_piece.is_white) and to_yx[0] == self.BOARD_SIZE-1:
+        if from_piece.is_white and to_yx[0] == 0 or (not from_piece.is_white) and to_yx[0] == self.BOARD_SIZE - 1:
             from_piece.is_king = True
 
     # check if the move is legal when regarding game's rules
@@ -79,59 +86,59 @@ class Board:
             return False
         if from_piece.is_king:
             # handle king behavior
-            # calculating the horizontal direction from->end to check for capturing/movement
-            if from_yx[0] > to_yx[0] < 0:
-                dy = -1
-            else:
-                dy = 1
-            # calculating the vertical direction from->end to check for capturing/movement
-            if from_yx[1] - to_yx[1] > 0:
-                dx = -1
-            else:
-                dx = 1
-            # count of seen objects with the opposite color
-            count = 0
-            # offset from the beginning coordinates
-            t = dy
-            c = dx
-            # while we've not met the ending point:
-            while from_yx[0] + t != to_yx[0] and from_yx[1] + c != to_yx[1]:
-                # if we came across a piece:
-                if self.board[from_yx[0] + t][from_yx[1] + c] is not None:
-                    # if it is the same color as the piece we are moving with:
-                    if self.board[from_yx[0] + t][from_yx[1] + c].is_white == from_piece.is_white and t != 0:
-                        return False
-                    # else, it must be the enemies piece
-                    else:
-                        count += 1
-                if count > 1:
-                    return False
-                t += dy
-                c += dx
+            return self._is_legal_king_move(from_yx, to_yx, move_in_progress)
         else:
-            # handle standard move: if diff = 1 and white, move only up else if black, only down
-            if abs(to_yx[0] - from_yx[0]) == 1:
-                # if piece is white and not moving up the board or
-                # it is black and not moving down the board, return false
-                if (from_piece.is_white and to_yx[0] - from_yx[0] != -1) or \
-                        ((not from_piece.is_white) and to_yx[0] - from_yx[0] != 1):
+            return self._is_man_legal_move(from_yx, to_yx, move_in_progress)
+
+    # underscore na początku metody dajesz to taka kownencja zeby pokazac ze metoda ma byc private (bardziej
+    # protected chyba w sumie)
+    def _is_legal_king_move(self, from_yx, to_yx, move_in_progress):
+        from_piece = self.board[from_yx[0]][from_yx[1]]
+
+        dy = sgn(to_yx[0] - from_yx[0])
+        dx = sgn(to_yx[1] - from_yx[1])
+
+        captured_pieces = 0
+        # look for any pieces on the kings path
+        # shift ranges by dx and dy so it goes from [start, stop) to (start, stop] (excludes start, includes stop)
+        x_iter = iter(range(from_yx[1] + dx, to_yx[1] + dx, dx))
+        for y in range(from_yx[0] + dy, to_yx[0] + dy, dy):
+            x = next(x_iter)
+            piece = self.board[y][x]
+            if piece is not None:
+                if piece.is_white == from_piece.is_white:
+                    # collision with allied piece
                     return False
-            # handle if attempted capture which means absolute delta of y is 2
-            elif abs(to_yx[0] - from_yx[0]) == 2:
-                if not move_in_progress:
-                    # if black tries to go up or white tries to go down
-                    # but now, the absolute delta of y is ought to be 2
-                    if (from_piece.is_white and to_yx[0] - from_yx[0] != -2) or \
-                            ((not from_piece.is_white) and to_yx[0] - from_yx[0] != 2):
-                        return False
-                if self.board[average(to_yx[0], from_yx[0])][average(to_yx[1], from_yx[1])] is None:
-                    return False
-                if self.board[average(to_yx[0], from_yx[0])][average(to_yx[1], from_yx[1])].is_white == \
-                        from_piece.is_white:
-                    return False
-            # if the move is too long in range ( not moving by one step and not capturing )
-            else:
+                else:
+                    captured_pieces += 1
+        if captured_pieces > 1:
+            # only one capture allowed in yyyyyy small_move?
+            return False
+
+        return True
+
+    def _is_man_legal_move(self, from_yx, to_yx, move_in_progress):
+        from_piece = self.board[from_yx[0]][from_yx[1]]
+
+        delta_y = to_yx[0] - from_yx[0]
+
+        # if piece is white and not moving up the board or
+        # it is black and not moving down the board, return false
+        if abs(delta_y) == 1:
+            if (from_piece.is_white and delta_y != -1 or
+                    not from_piece.is_white and delta_y != 1):
                 return False
+        # handle if attempted capture which means absolute delta of y is 2
+        elif abs(delta_y) == 2:
+            if self.board[average(to_yx[0], from_yx[0])][average(to_yx[1], from_yx[1])] is None:
+                return False
+            if self.board[average(to_yx[0], from_yx[0])][average(to_yx[1], from_yx[1])].is_white == \
+                    from_piece.is_white:
+                return False
+        # if the move is too long in range ( not moving by one step and not capturing )
+        else:
+            return False
+
         return True
 
     # no clue
@@ -147,7 +154,7 @@ class Board:
     def init_board(self):
         def fill_row(row, start, is_white):
             for column in range(start, self.BOARD_SIZE, 2):
-                self.board[row][column] = Piece(is_white, False, row, column)
+                self.board[row][column] = Piece(row, column, is_white, False)
 
         # fill black
         fill_row(0, 1, is_white=False)
@@ -158,22 +165,9 @@ class Board:
         fill_row(self.BOARD_SIZE - 1, 0, is_white=True)
         fill_row(self.BOARD_SIZE - 2, 1, is_white=True)
         fill_row(self.BOARD_SIZE - 3, 0, is_white=True)
-        self.board[2][1] = Piece(False, True, 2, 1)
-        self.board[3][2] = Piece(True, False, 3, 2)
-        #self.board[4][3] = Piece(True, False, 4, 3)
-        self.board[5][4] = None
 
     def get_king(self, player, yx):
         pass
-
-    # def display(self):
-    #     for row in self.board:
-    #         for cell in row:
-    #             if cell is None:
-    #                 print('x', end = '')
-    #             else:
-    #                 print(cell)
-    #         print('')
 
     def display(self):
 
@@ -185,14 +179,16 @@ class Board:
         # print column ids (letters)
         print("    ", end='')
         for i in range(self.BOARD_SIZE):
-            print(chr(ord('A') + i) + "   ", end='')
+            col_id = chr(ord('A') + i) if self.debug is False else str(i)
+            print(col_id + "   ", end='')
         print('')
 
         print_horizontal_lines()
 
         for y in range(self.BOARD_SIZE):
             print('')  # newline
-            print(str(y + 1) + ' ', end='')  # print row ids (numbers)
+            row_id = y + 1 if self.debug is False else y
+            print(str(row_id) + ' ', end='')  # print row ids (numbers)
             for x in range(self.BOARD_SIZE):
                 if self.board[y][x] is None:
                     print("|   ", end='')
@@ -205,7 +201,7 @@ class Board:
 
 class Piece:
 
-    def __init__(self, is_white, is_king, y, x):
+    def __init__(self, y, x, is_white, is_king=False):
         self.is_white = is_white
         self.is_king = is_king
         self.y = y

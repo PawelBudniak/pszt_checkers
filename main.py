@@ -12,10 +12,17 @@ def print_hi(name):
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     brd = checkers.Board()
+    brd.debug = True
+
+    brd.board[2][1] = checkers.Piece(2, 1, False, is_king=False)
+    brd.board[3][2] = checkers.Piece(3, 2, True, is_king=False)
+    # self.board[4][3] = Piece(True, False, 4, 3)
+    brd.board[5][4] = None
+
     player = checkers.Player(False)
     brd.display()
     brd.available_moves(player, (2, 1), False)
-    brd.move(player, (2, 1), (4, 3), False)
-    brd.display()
+    #brd.move(player, (2, 1), (4, 3), False)
+    #brd.display()
     #print(brd.is_legal_move((2, 1), (5, 4), False))
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
