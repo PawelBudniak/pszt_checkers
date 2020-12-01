@@ -101,9 +101,10 @@ class Board:
         captured_pieces = 0
         # look for any pieces on the kings path
         # shift ranges by dx and dy so it goes from [start, stop) to (start, stop] (excludes start, includes stop)
-        x_iter = iter(range(from_yx[1] + dx, to_yx[1] + dx, dx))
-        for y in range(from_yx[0] + dy, to_yx[0] + dy, dy):
-            x = next(x_iter)
+        y_path = range(from_yx[0] + dy, to_yx[0] + dy, dy)
+        x_path = range(from_yx[1] + dx, to_yx[1] + dx, dx)
+        path = zip(y_path, x_path)
+        for y, x in path:
             piece = self.board[y][x]
             if piece is not None:
                 if piece.is_white == from_piece.is_white:

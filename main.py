@@ -14,7 +14,7 @@ if __name__ == '__main__':
     brd = checkers.Board()
     brd.debug = True
 
-    brd.board[2][1] = checkers.Piece(2, 1, False, is_king=False)
+    brd.board[2][1] = checkers.Piece(2, 1, False, is_king=True)
     brd.board[3][2] = checkers.Piece(3, 2, True, is_king=False)
     # self.board[4][3] = Piece(True, False, 4, 3)
     brd.board[5][4] = None
