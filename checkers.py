@@ -48,7 +48,7 @@ class Board:
 
     def _should_capture(self, player):
         for piece in self.get_pieces(player):
-            if self.available_captures(player, (piece.x, piece.y)):
+            if self.available_captures(player, (piece.y, piece.x)):
                 return True
         return False
 
