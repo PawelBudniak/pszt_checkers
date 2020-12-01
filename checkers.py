@@ -22,7 +22,7 @@ class Board:
         move_from = Point(chosen_path.pop(0), chosen_path.pop(0))
         move_to = Point(chosen_path.pop(0), chosen_path.pop(0))
 
-        should_capture = len(self.available_captures(player, move_from)) > 0
+        should_capture = self._should_capture(player)
 
         while processing:
             x = self.score.copy()
@@ -45,6 +45,13 @@ class Board:
             move_to = (chosen_path.pop(0), chosen_path.pop(0))
 
         return True
+
+    def _should_capture(self, player):
+        for piece in self.get_pieces(player):
+            if self.available_captures(player, (piece.x, piece.y)):
+                return True
+        return False
+
 
     def move(self, player, start, to):
         # miki
