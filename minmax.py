@@ -41,8 +41,6 @@ class MinmaxAI(checkers.Player):
             else:
                 scores.append(self.minimax_score(temp_board, current_player, opponent, depth - 1))
 
-        if current_player.is_white():
-
 
         if current_player.is_white():
             return max(scores)

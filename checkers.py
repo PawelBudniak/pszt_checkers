@@ -1,5 +1,5 @@
 from enum import Enum
-
+import copy
 
 def average(x, y):
     return int((x + y) / 2)
@@ -15,61 +15,82 @@ def sgn(x):
 
 
 class Board:
+
     BOARD_SIZE = 8
+    PIECES_COUNT = 12
 
     def __init__(self):
         self.board = [[None for i in range(self.BOARD_SIZE)]
                       for j in range(self.BOARD_SIZE)]
         self.init_board()
         self.debug = False
+        self.score = [self.PIECES_COUNT, self.PIECES_COUNT]
+
+    def full_move(self, player, chosen_path):
+        board = copy.deepcopy(self.board)
+        print("Procesowana sciezka: " + str(chosen_path))
+        processing = True
+        move_from = (chosen_path.pop(0), chosen_path.pop(0))
+        move_to = (chosen_path.pop(0), chosen_path.pop(0))
+
+        should_capture = len(self.available_captures(move_from, move_to)) > 0
+
+        while processing:
+            x = self.score.copy()
+            if not self.move(player, move_from, move_to):
+                self.board = board
+                return False
+            if x == self.score and should_capture:
+                self.board = board
+                print("Player required to capture, wrong move")
+                return False
+            if x == self.score and chosen_path:
+                print("Too many move choices, wrong move")
+                self.board = board
+                return False
+            should_capture = False
+            if not chosen_path:
+                break
+            move_from = move_to
+            move_to = (chosen_path.pop(0), chosen_path.pop(0))
+
+        return True
 
     def move(self, player, from_yx, to_yx):
         # miki
-        if not self.is_legal_move(player, from_yx, to_yx):
+        if not self._is_within_constraints(player, from_yx, to_yx):
             print("Error, wrong move")
             return
         from_piece = self.board[from_yx[0]][from_yx[1]]
         if from_piece.is_king:
-            # captured piece coordinates
-            x = -1
-            y = -1
-            # calculating the horizontal direction from->end to check for capturing/movement
-            if from_yx[0] > to_yx[0] < 0:
-                dy = -1
+            move_analysis = self._king_possible_capture(from_yx, to_yx)
+            if not move_analysis[0]:
+                return False
             else:
-                dy = 1
-            # calculating the vertical direction from->end to check for capturing/movement
-            if from_yx[1] - to_yx[1] > 0:
-                dx = -1
-            else:
-                dx = 1
-            # count of seen objects with the opposite color
-            # offset from the beginning coordinates
-            t = dy
-            c = dx
-            # while we've not met the ending point:
-            while from_yx[0] + t != to_yx[0] and from_yx[1] + c != to_yx[1]:
-                # if we came across a piece:
-                if self.board[from_yx[0] + t][from_yx[1] + c] is not None:
-                    x = from_yx[1] + c
-                    y = from_yx[0] + t
-                    break
-                t += dy
-                c += dx
-            if x != -1:
-                self.board[y][x] = None
+                if move_analysis[1] is not None and move_analysis[2] == 1:
+                    self.board[move_analysis[1][0]][move_analysis[1][1]] = None
+                    if player.is_white:
+                        self.score[0] -= 1
+                    else:
+                        self.score[1] -= 1
         elif not from_piece.is_king:
             if abs(to_yx[0] - from_yx[0]) == 2:
                 self.board[average(to_yx[0], from_yx[0])][average(to_yx[1], from_yx[1])] = None
+                if player.is_white:
+                    self.score[0] -= 1
+                else:
+                    self.score[1] -= 1
         self.board[to_yx[0]][to_yx[1]], self.board[from_yx[0]][from_yx[1]] = self.board[from_yx[0]][from_yx[1]], \
                                                                              self.board[to_yx[0]][to_yx[1]]
         if from_piece.is_white and to_yx[0] == 0 or (not from_piece.is_white) and to_yx[0] == self.BOARD_SIZE - 1:
             from_piece.is_king = True
+        return True  # successful action
 
     # check if this move is a capture
     def is_legal_capture(self, player, from_yx, to_yx):
         # miki
         from_piece = self.board[from_yx[0]][from_yx[1]]
+        captured_piece = None
 
         if self._is_within_constraints(player, from_yx, to_yx):
             if from_piece.is_king:
@@ -77,7 +98,7 @@ class Board:
                 return self._is_king_legal_capture(from_yx, to_yx)
             else:
                 return self._is_man_legal_capture(from_yx, to_yx)
-        return False
+        return False, None
 
     # check if the move is legal when regarding game's rules
     def is_legal_move(self, player, from_yx, to_yx):
@@ -87,19 +108,31 @@ class Board:
         if self._is_within_constraints(player, from_yx, to_yx):
             if from_piece.is_king:
                 # handle king behavior
-                return self._is_king_legal_move(from_yx, to_yx)
+                return self._is_king_legal_move(from_yx, to_yx), None
             else:
-                return self._is_man_legal_move(from_yx, to_yx)
+                return self._is_man_legal_move(from_yx, to_yx), None
+        return False, None
+
+    def is_legal_action(self, player, from_yx, to_yx):
+        # miki
+        from_piece = self.board[from_yx[0]][from_yx[1]]
+
+        if self._is_within_constraints(player, from_yx, to_yx):
+            if from_piece.is_king:
+                # handle king behavior
+                return self._is_king_legal_action(from_yx, to_yx)
+            else:
+                return self._is_man_legal_action(from_yx, to_yx)
         return False
 
     # check basic game constraints
     def _is_within_constraints(self, player, from_yx, to_yx):
         from_piece = self.board[from_yx[0]][from_yx[1]]
-        # case: piece not destined for given player
-        if not from_piece.is_white == player.is_white:
-            return False
         # case: out of board bounds
         if from_piece is None:
+            return False
+        # case: piece not destined for given player
+        if not from_piece.is_white == player.is_white:
             return False
         if to_yx[0] not in range(self.BOARD_SIZE) or to_yx[1] not in range(self.BOARD_SIZE):
             return False
@@ -114,27 +147,36 @@ class Board:
     # underscore na początku metody dajesz to taka kownencja zeby pokazac ze metoda ma byc private (bardziej
     # protected chyba w sumie)
     def _is_king_legal_action(self, from_yx, to_yx):
-        if self._is_king_legal_capture(from_yx, to_yx) or self._is_king_legal_move(from_yx, to_yx):
-            return True
+        result = self._king_possible_capture(from_yx, to_yx)
+        if self._king_possible_capture(from_yx, to_yx)[0]:
+            return True,
         return False
 
     def _is_king_legal_capture(self, from_yx, to_yx):
-        if self._king_capture_count(from_yx, to_yx) == 1:
-            return True
-        return False
+        result = self._king_possible_capture(from_yx, to_yx)
+        if result[0] is True and result[1] is not None and result[2] == 1:
+            return True, result[1]
+        return False, None
 
     def _is_king_legal_move(self, from_yx, to_yx):
-        if self._king_capture_count(from_yx, to_yx) == 0:
-            return True
+        result = self._king_possible_capture(from_yx, to_yx)
+        if result[0] is True and result[1] is None and result[2] == 0:
+            return True,
         return False
 
-    def _king_capture_count(self, from_yx, to_yx):
+    # arg 0 tells the user, if the action is at all possible
+    # arg 1 holds the captured piece - only, if it was captured
+    # arg 2 hold the count of encountered pieces
+    def _king_possible_capture(self, from_yx, to_yx):
         from_piece = self.board[from_yx[0]][from_yx[1]]
 
         dy = sgn(to_yx[0] - from_yx[0])
         dx = sgn(to_yx[1] - from_yx[1])
 
+        is_action_possible = True
         captured_pieces = 0
+        captured_piece = None  # only useful, if succesful capture
+
         # look for any pieces on the kings path
         # shift ranges by dx and dy so it goes from [start, stop) to (start, stop] (excludes start, includes stop)
         y_path = range(from_yx[0] + dy, to_yx[0] + dy, dy)
@@ -145,11 +187,14 @@ class Board:
             if piece is not None:
                 if piece.is_white == from_piece.is_white:
                     # collision with allied piece
-                    captured_pieces = -1
+                    is_action_possible = False
                     break
                 else:
                     captured_pieces += 1
-        return captured_pieces
+                    captured_piece = (y, x)
+        if captured_pieces not in (0, 1):
+            is_action_possible = False
+        return is_action_possible, captured_piece, captured_pieces
 
     def _is_man_legal_action(self, from_yx, to_yx):
 
@@ -171,8 +216,8 @@ class Board:
                 return False
             # if the move is too long in range ( not moving by one step and not capturing )
             else:
-                return True
-        return False
+                return True, (average(to_yx[0], from_yx[0]), average(to_yx[1], from_yx[1]))
+        return False, None
 
     # trying to move a piece without capturing
     def _is_man_legal_move(self, from_yx, to_yx):
@@ -188,21 +233,21 @@ class Board:
         return False
 
     # list all available moves
-    def available_moves(self, player, from_yx, move_in_progress):
+    def available_moves(self, player, from_yx):
         move_list = []
         for row in range(self.BOARD_SIZE):
             for el in range(self.BOARD_SIZE):
-                if self.is_legal_move(player, from_yx, (row, el)):
+                if self.is_legal_move(player, from_yx, (row, el))[0]:
                     move_list.append((row, el))
         print(move_list)
         return move_list
 
     # list all available captures
-    def available_captures(self, player, from_yx, move_in_progress):
+    def available_captures(self, player, from_yx):
         move_list = []
         for row in range(self.BOARD_SIZE):
             for el in range(self.BOARD_SIZE):
-                if self.is_legal_capture(player, from_yx, (row, el)):
+                if self.is_legal_capture(player, from_yx, (row, el))[0]:
                     move_list.append((row, el))
         print(move_list)
         return move_list
@@ -278,9 +323,12 @@ class Player:
     def __init__(self, is_white):
         self.is_white = is_white
 
-    def get_move(self):
-        pass
-
+    def get_move(self, board):
+        x = input("Is white = " + str(self.is_white) + "\nEnter coordinates: <from_y> <from_x> <to_y> <to_x>").split()
+        result = []
+        for i in range(len(x)):
+            result.append(int(x[i]))
+        return result
 
 class MinmaxAI(Player):
 
