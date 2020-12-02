@@ -18,6 +18,7 @@ def print_hi(name):
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
+    
     white_player = minmax.MinmaxAI(is_white=True)
     black_player = minmax.MinmaxAI(is_white=False, opponent=white_player, depth=20)
     white_player.opponent = black_player
