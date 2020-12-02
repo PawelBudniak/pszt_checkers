@@ -1,153 +1,404 @@
 from enum import Enum
+import copy
+from player import *
 
 
-def average(x, y):
-    return int((x + y) / 2)
+from helper import *
 
 
 class Board:
     BOARD_SIZE = 8
-
-    # 1 - kazdy z graczy ma  liste pionkow (typ, (koordy))
-    # 2 - na boardzie stawiam se obiekty Piece w danym miejscu i essa
+    PIECES_COUNT = 12
 
     def __init__(self):
         self.board = [[None for i in range(self.BOARD_SIZE)]
                       for j in range(self.BOARD_SIZE)]
-        self.init_board()
+        #self.init_board()
+        self.debug = False
+        self.score = [self.PIECES_COUNT, self.PIECES_COUNT]
+        self.white_queen_moves = 0
+        self.black_queen_moves = 0
+        self.white_player = None
+        self.black_player = None
 
-    def move(self, player, from_yx, to_yx, move_in_progress):
+    def is_draw(self):
+        return self.white_queen_moves >= 15 and self.black_queen_moves >= 15
+
+
+    def white_won(self):
+        self.count_pieces()
+        if self.score[1] == 0 or not self._can_move(self.black_player):
+            return True
+        elif self.score[0] == 0 or not self._can_move(self.white_player):
+            return False
+        else:
+            return None
+
+    def count_pieces(self):
+        self.score = [0,0]
+        for y in range(self.BOARD_SIZE):
+            for x in range(self.BOARD_SIZE):
+                piece = self.board[y][x]
+                if piece is not None and piece.is_white:
+                    self.score[0] += 1
+                elif piece is not None and not piece.is_white:
+                    self.score[1] += 1
+
+    def full_move(self, player, chosen_path):
+
+        board = copy.deepcopy(self.board)
+        begin_score = self.score
+        if chosen_path is None:
+            print(f'white won: {self.white_won()}')
+            return False
+        # print("Procesowana sciezka: " + str(chosen_path))
+        processing = True
+        chosen_path = copy.deepcopy(chosen_path)
+        move_from = chosen_path.pop(0)
+        move_to = chosen_path.pop(0)
+
+        should_capture = self._should_capture(player)
+
+        while processing:
+            prev_score = self.score.copy()
+            if not self.move(player, move_from, move_to):
+                self.board = board
+                return False
+            if prev_score == self.score and should_capture:
+                self.board = board
+                print("Player required to capture, wrong move")
+                return False
+            # player can move multiple times only when capturing
+            if prev_score == self.score and chosen_path:
+                print("Too many move choices, wrong move")
+                self.board = board
+                return False
+            should_capture = False
+
+            if not chosen_path:
+                break
+            move_from = move_to
+            move_to = chosen_path.pop(0)
+
+        if self.score == begin_score and self.board[move_to.y][move_to.x].is_king:
+            if self.board[move_to.y][move_to.x].is_white:
+                self.white_queen_moves += 1
+            else:
+                self.black_queen_moves += 1
+        return True
+
+    def _should_capture(self, player):
+        for piece in self.get_pieces(player):
+            if self.available_captures(player, Point(piece.y, piece.x)):
+                return True
+        return False
+
+    def _can_move(self, player):
+        for piece in self.get_pieces(player):
+            if self.available_actions(player, Point(piece.y, piece.x)):
+                return True
+        return False
+
+    def move(self, player, start, to):
         # miki
-        if not self.is_legal_move(player, from_yx, to_yx, move_in_progress):
+        if not self._is_within_constraints(player, start, to):
             print("Error, wrong move")
             return
-        from_piece = self.board[from_yx[0]][from_yx[1]]
+        from_piece = self.board[start.y][start.x]
         if from_piece.is_king:
-            # captured piece coordinates
-            x = -1
-            y = -1
-            # calculating the horizontal direction from->end to check for capturing/movement
-            if from_yx[0] > to_yx[0] < 0:
-                dy = -1
+            move_analysis = self._king_possible_capture(start, to)
+            if not move_analysis[0]:
+                return False
             else:
-                dy = 1
-            # calculating the vertical direction from->end to check for capturing/movement
-            if from_yx[1] - to_yx[1] > 0:
-                dx = -1
-            else:
-                dx = 1
-            # count of seen objects with the opposite color
-            # offset from the beginning coordinates
-            t = dy
-            c = dx
-            # while we've not met the ending point:
-            while from_yx[0] + t != to_yx[0] and from_yx[1] + c != to_yx[1]:
-                # if we came across a piece:
-                if self.board[from_yx[0] + t][from_yx[1] + c] is not None:
-                    x = from_yx[1] + c
-                    y = from_yx[0] + t
-                    break
-                t += dy
-                c += dx
-            if x != -1:
-                self.board[y][x] = None
+                # if a single piece was captured
+                if move_analysis[1] is not None and move_analysis[2] == 1:
+                    self.board[move_analysis[1][0]][move_analysis[1][1]] = None
+                    if player.is_white:
+                        self.count_pieces()
+                        #self.score[0] -= 1
+                        self.white_queen_moves = 0
+                    else:
+                        self.count_pieces()
+                       # self.score[1] -= 1
+                        self.black_queen_moves = 0
         elif not from_piece.is_king:
-            if abs(to_yx[0] - from_yx[0]) == 2:
-                self.board[average(to_yx[0], from_yx[0])][average(to_yx[1], from_yx[1])] = None
-        self.board[to_yx[0]][to_yx[1]], self.board[from_yx[0]][from_yx[1]] = self.board[from_yx[0]][from_yx[1]], \
-                                                                             self.board[to_yx[0]][to_yx[1]]
-        if from_piece.is_white and to_yx[0] == 0 or (not from_piece.is_white) and to_yx[0] == self.BOARD_SIZE-1:
-            from_piece.is_king = True
+            if abs(to.y - start.y) == 2:
+                self.board[average(to.y, start.y)][average(to.x, start.x)] = None
+                if player.is_white:
+                    self.count_pieces()
+                    self.white_queen_moves = 0
+                    pass
+                   # self.score[0] -= 1
+                else:
+                    self.count_pieces()
+                    self.black_queen_moves = 0
+                    pass
+                   #self.score[1] -= 1
+
+        # if from_piece.is_white and to.y == 0 or (not from_piece.is_white) and to.y == self.BOARD_SIZE - 1:
+        #     from_piece.is_king = True
+        self._execute_move(start,to)
+        self._try_king(player, to)
+        return True  # successful action
+
+    def _execute_move(self, start, to):
+        self.board[to.y][to.x] = self.board[start.y][start.x]
+        self.board[start.y][start.x] = None
+        piece = self.board[to.y][to.x]
+        piece.y = to.y
+        piece.x = to.x
+
+    # check if this move is a capture
+    def is_legal_capture(self, player, start, to):
+        # miki
+        captured_piece = None
+
+        if self._is_within_constraints(player, start, to):
+            from_piece = self.board[start.y][start.x]
+            if from_piece.is_king:
+                # handle king behavior
+                return self._is_king_legal_capture(start, to)
+            else:
+                return self._is_man_legal_capture(start, to)
+        return False, None
 
     # check if the move is legal when regarding game's rules
-    def is_legal_move(self, player, from_yx, to_yx, move_in_progress):
+    def is_legal_move(self, player, start, to):
         # miki
-        from_piece = self.board[from_yx[0]][from_yx[1]]
-        # case: piece not destined for given player
-        if not from_piece.is_white == player.is_white:
+        if self._is_within_constraints(player, start, to):
+            from_piece = self.board[start.y][start.x]
+            if from_piece.is_king:
+                # handle king behavior
+                return self._is_king_legal_move(start, to), None
+            else:
+                return self._is_man_legal_move(start, to), None
+        return False, None
+
+    def is_legal_action(self, player, start, to):
+        # miki
+
+        if self._is_within_constraints(player, start, to):
+            from_piece = self.board[start.y][start.x]
+            if from_piece.is_king:
+                # handle king behavior
+                return self._is_king_legal_action(start, to)
+            else:
+                return self._is_man_legal_action(start, to)
+        return False
+
+    # check basic game constraints
+    def _is_within_constraints(self, player, start, to):
+
+        if to.y not in range(self.BOARD_SIZE) or to.x not in range(self.BOARD_SIZE) or \
+                start.y not in range(self.BOARD_SIZE) or start.x not in range(self.BOARD_SIZE):
             return False
+        from_piece = self.board[start.y][start.x]
         # case: out of board bounds
         if from_piece is None:
             return False
-        if to_yx[0] not in range(self.BOARD_SIZE) or to_yx[1] not in range(self.BOARD_SIZE):
+        # case: piece not destined for given player
+        if not from_piece.is_white == player.is_white:
             return False
+
         # case: piece cannot move like that because the x-travel distance must be equal to the y-travel distance
-        if abs(to_yx[0] - from_yx[0]) != abs(to_yx[1] - from_yx[1]):
+        if abs(to.y - start.y) != abs(to.x - start.x):
             return False
         # case: destination taken by another piece
-        if self.board[to_yx[0]][to_yx[1]] is not None:
+        if self.board[to.y][to.x] is not None:
             return False
-        if from_piece.is_king:
-            # handle king behavior
-            # calculating the horizontal direction from->end to check for capturing/movement
-            if from_yx[0] > to_yx[0] < 0:
-                dy = -1
-            else:
-                dy = 1
-            # calculating the vertical direction from->end to check for capturing/movement
-            if from_yx[1] - to_yx[1] > 0:
-                dx = -1
-            else:
-                dx = 1
-            # count of seen objects with the opposite color
-            count = 0
-            # offset from the beginning coordinates
-            t = dy
-            c = dx
-            # while we've not met the ending point:
-            while from_yx[0] + t != to_yx[0] and from_yx[1] + c != to_yx[1]:
-                # if we came across a piece:
-                if self.board[from_yx[0] + t][from_yx[1] + c] is not None:
-                    # if it is the same color as the piece we are moving with:
-                    if self.board[from_yx[0] + t][from_yx[1] + c].is_white == from_piece.is_white and t != 0:
-                        return False
-                    # else, it must be the enemies piece
-                    else:
-                        count += 1
-                if count > 1:
-                    return False
-                t += dy
-                c += dx
-        else:
-            # handle standard move: if diff = 1 and white, move only up else if black, only down
-            if abs(to_yx[0] - from_yx[0]) == 1:
-                # if piece is white and not moving up the board or
-                # it is black and not moving down the board, return false
-                if (from_piece.is_white and to_yx[0] - from_yx[0] != -1) or \
-                        ((not from_piece.is_white) and to_yx[0] - from_yx[0] != 1):
-                    return False
-            # handle if attempted capture which means absolute delta of y is 2
-            elif abs(to_yx[0] - from_yx[0]) == 2:
-                if not move_in_progress:
-                    # if black tries to go up or white tries to go down
-                    # but now, the absolute delta of y is ought to be 2
-                    if (from_piece.is_white and to_yx[0] - from_yx[0] != -2) or \
-                            ((not from_piece.is_white) and to_yx[0] - from_yx[0] != 2):
-                        return False
-                if self.board[average(to_yx[0], from_yx[0])][average(to_yx[1], from_yx[1])] is None:
-                    return False
-                if self.board[average(to_yx[0], from_yx[0])][average(to_yx[1], from_yx[1])].is_white == \
-                        from_piece.is_white:
-                    return False
-            # if the move is too long in range ( not moving by one step and not capturing )
-            else:
-                return False
         return True
 
-    # no clue
-    def available_moves(self, player, from_yx, move_in_progress):
+    # underscore na początku metody dajesz to taka kownencja zeby pokazac ze metoda ma byc private (bardziej
+    # protected chyba w sumie)
+    def _is_king_legal_action(self, start, to):
+        result = self._king_possible_capture(start, to)
+        if self._king_possible_capture(start, to)[0]:
+            return True,
+        return False
+
+    def _is_king_legal_capture(self, start, to):
+        result = self._king_possible_capture(start, to)
+        if result[0] is True and result[1] is not None and result[2] == 1:
+            return True, result[1]
+        return False, None
+
+    def _is_king_legal_move(self, start, to):
+        result = self._king_possible_capture(start, to)
+        if result[0] is True and result[1] is None and result[2] == 0:
+            return True,
+        return False
+
+    # arg 0 tells the user, if the action is at all possible
+    # arg 1 holds the captured piece - only, if it was captured
+    # arg 2 hold the count of encountered pieces
+    def _king_possible_capture(self, start, to):
+        from_piece = self.board[start.y][start.x]
+
+        dy = sgn(to.y - start.y)
+        dx = sgn(to.x - start.x)
+
+        is_action_possible = True
+        captured_pieces = 0
+        captured_piece = None  # only useful, if succesful capture
+
+        # look for any pieces on the kings path
+        # shift ranges by dx and dy so it goes from [start, stop) to (start, stop] (excludes start, includes stop)
+        y_path = range(start.y + dy, to.y + dy, dy)
+        x_path = range(start.x + dx, to.x + dx, dx)
+        path = zip(y_path, x_path)
+        for y, x in path:
+            piece = self.board[y][x]
+            if piece is not None:
+                if piece.is_white == from_piece.is_white:
+                    # collision with allied piece
+                    is_action_possible = False
+                    break
+                else:
+                    captured_pieces += 1
+                    captured_piece = (y, x)
+        if captured_pieces not in (0, 1):
+            is_action_possible = False
+        return is_action_possible, captured_piece, captured_pieces
+
+    def _is_man_legal_action(self, start, to):
+
+        if self._is_man_legal_capture(start, to)[0] or self._is_man_legal_move(start, to):
+            return True
+        else:
+            return False
+
+    def _is_man_legal_capture(self, start, to):
+
+        from_piece = self.board[start.y][start.x]
+        delta_y = to.y - start.y
+
+        if abs(delta_y) == 2:
+            if self.board[average(to.y, start.y)][average(to.x, start.x)] is None:
+                return False, None
+            if self.board[average(to.y, start.y)][average(to.x, start.x)].is_white == \
+                    from_piece.is_white:
+                return False, None
+            # if the move is too long in range ( not moving by one step and not capturing )
+            else:
+                return True, (average(to.y, start.y), average(to.x, start.x))
+        return False, None
+
+    # trying to move a piece without capturing
+    def _is_man_legal_move(self, start, to):
+
+        from_piece = self.board[start.y][start.x]
+        delta_y = to.y - start.y
+
+        if abs(delta_y) == 1:
+            if from_piece.is_white and delta_y != -1 or not from_piece.is_white and delta_y != 1:
+                return False
+            else:
+                return True
+        return False
+
+    # list all available moves
+    # TODO: 2 sprawdzenia
+    def available_moves(self, player, start):
         move_list = []
         for row in range(self.BOARD_SIZE):
             for el in range(self.BOARD_SIZE):
-                if self.is_legal_move(player, from_yx, (row, el), move_in_progress):
-                    move_list.append((row, el))
-        print(move_list)
+                if self.is_legal_move(player, start, Point(row, el))[0]:
+                    move_list.append(Point(row, el))
+        #print(move_list)
+        return move_list
+
+    def available_actions(self, player, start):
+        action_list = []
+        for row in range(self.BOARD_SIZE):
+            for el in range(self.BOARD_SIZE):
+                if self.is_legal_action(player, start, Point(row, el)):
+                    action_list.append(start)
+                    action_list.append(Point(row, el))
+        # print(move_list)
+        return action_list
+
+    # TODO: pilnowac piece.y i piece.x i chyba score przy tyych wszystkich biciach
+    def available_full_moves(self, player):
+        all_captures = []
+        all_normal_moves = []
+        for piece in player.get_pieces(self):
+            start = Point(piece.y, piece.x)
+            capture_tree = self.capture_trees(player, start)
+            capture_tree.pop()  # usuwa taka liste co ma sam pionek startowy, jakos to trzeba zmienic bo jest brzydko
+            # since we build the tree starting from the latest moves, we need to reverse it
+            capture_tree = [list(reversed(alist)) for alist in capture_tree]
+            all_captures.extend(capture_tree)
+
+            normal_moves = self.available_moves(player, Point(piece.y, piece.x))
+            normal_tree = [[start, move] for move in normal_moves]
+            all_normal_moves.extend(normal_tree)
+
+        #  if available captures, they need to be executed
+        if all_captures:
+            return sorted(all_captures, key=len)
+        else:
+            return all_normal_moves
+
+    # def _capture_possibilities(self, player, start, all_moves, move_chain):
+    #     captures = self.available_captures(player, start)
+    #     move_chain.append(start)
+    #     all_moves.append(copy.deepcopy(move_chain))
+    #     if captures is None:
+    #         return None
+    #
+    #     board_copy = copy.deepcopy(self.board)
+    #
+    #     for capture in captures:
+    #         self.board = copy.deepcopy(self.board)
+    #         self.move(player, start, capture)
+    #         self._capture_possibilities(player, capture, all_moves, move_chain)
+    #         #if new_chain is not None:
+    #             #all_moves.append(new_chain)
+    #
+    #     self.board = board_copy
+    #
+    #     return all_moves
+
+    def capture_trees(self, player, start):
+        captures = self.available_captures(player, start)
+        #if start.y == 6 and start.x == 5:
+            #print('d00psko')
+        if not captures:
+            #print(f'siema: {start}')
+            return [[start]]
+        board_copy = copy.deepcopy(self.board)
+        score_copy = copy.deepcopy(self.score)
+        tree = []
+        for capture in captures:
+            self.board = copy.deepcopy(board_copy)
+            if not self.move(player, start, capture):
+                print('nie move')
+            child_tree = self.capture_trees(player, capture)
+            for alist in child_tree:
+                alist.append(start)
+            tree.extend((child_tree))
+        self.board = board_copy
+        tree.append([start])
+        self.score = score_copy
+        return tree
+
+
+
+
+    # list all available captures
+    def available_captures(self, player, start):
+        move_list = []
+        for row in range(self.BOARD_SIZE):
+            for el in range(self.BOARD_SIZE):
+                if self.is_legal_capture(player, start, Point(row, el))[0]:
+                    move_list.append(Point(row, el))
+        #print(move_list)
         return move_list
 
     def init_board(self):
         def fill_row(row, start, is_white):
             for column in range(start, self.BOARD_SIZE, 2):
-                self.board[row][column] = Piece(is_white, False, row, column)
+                self.board[row][column] = Piece(row, column, is_white, False)
 
         # fill black
         fill_row(0, 1, is_white=False)
@@ -158,22 +409,23 @@ class Board:
         fill_row(self.BOARD_SIZE - 1, 0, is_white=True)
         fill_row(self.BOARD_SIZE - 2, 1, is_white=True)
         fill_row(self.BOARD_SIZE - 3, 0, is_white=True)
-        self.board[2][1] = Piece(False, True, 2, 1)
-        self.board[3][2] = Piece(True, False, 3, 2)
-        #self.board[4][3] = Piece(True, False, 4, 3)
-        self.board[5][4] = None
 
-    def get_king(self, player, yx):
-        pass
+    def _get_king(self, player, point):
+        self.board[point.y][point.x].is_king = True
 
-    # def display(self):
-    #     for row in self.board:
-    #         for cell in row:
-    #             if cell is None:
-    #                 print('x', end = '')
-    #             else:
-    #                 print(cell)
-    #         print('')
+    def _try_king(self, player, point):
+        if (player.is_white and point.y == 0 or
+                not player.is_white and point.y == self.BOARD_SIZE - 1):
+            self._get_king(player, point)
+
+    def get_pieces(self, player):
+        pieces = []
+        for row in self.board:
+            for cell in row:
+                tmp_piece = cell
+                if tmp_piece is not None and tmp_piece.is_white == player.is_white:
+                    pieces.append(tmp_piece)
+        return pieces
 
     def display(self):
 
@@ -185,14 +437,16 @@ class Board:
         # print column ids (letters)
         print("    ", end='')
         for i in range(self.BOARD_SIZE):
-            print(chr(ord('A') + i) + "   ", end='')
+            col_id = chr(ord('A') + i) if self.debug is False else str(i)
+            print(col_id + "   ", end='')
         print('')
 
         print_horizontal_lines()
 
         for y in range(self.BOARD_SIZE):
             print('')  # newline
-            print(str(y + 1) + ' ', end='')  # print row ids (numbers)
+            row_id = y + 1 if self.debug is False else y
+            print(str(row_id) + ' ', end='')  # print row ids (numbers)
             for x in range(self.BOARD_SIZE):
                 if self.board[y][x] is None:
                     print("|   ", end='')
@@ -202,10 +456,23 @@ class Board:
             print_horizontal_lines()
         print('')  # newline
 
+    def key(self, player):
+        whites_turn = player.is_white
+        key = str(whites_turn) + '\n'
+        for col in self.board:
+            for cell in col:
+                if cell is not None:
+                    key += (str(cell))
+                else:
+                    key += '-'
+            key += '\n'
+        return key
+
+
 
 class Piece:
 
-    def __init__(self, is_white, is_king, y, x):
+    def __init__(self, y, x, is_white, is_king=False):
         self.is_white = is_white
         self.is_king = is_king
         self.y = y
@@ -220,24 +487,8 @@ class Piece:
             char = char.upper()
         return char
 
-
-class Player:
-
-    def __init__(self, is_white):
-        self.is_white = is_white
-
-    def get_move(self):
-        pass
-
-
-class MinmaxAI(Player):
-
-    def get_move(self):
-        pass
-
-    def minmax_score(self):
-        pass
-
+    def __repr__(self):
+        return self.__str__()
 
 if __name__ == '__main__':
     brd = Board()
