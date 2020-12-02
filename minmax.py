@@ -131,3 +131,43 @@ class MinmaxAI(player.Player):
         return score
 
         # player_val = sum(values[piece] for piece in player.get_pieces())
+
+class TestMinimaxAI(MinmaxAI):
+
+    def __init__(self, is_white, opponent=None, depth=5, noab, no):
+
+
+    def minmax_score(self, board, current_player, opponent, depth):
+        # white is the maximizer
+        board_key = board.key(current_player)
+
+        if board_key not in self.cache:
+            if board.white_won() is True:
+                return self.cache_and_return(board, current_player, self.WIN_SCORE)
+            elif board.white_won() is False:
+                return self.cache_and_return(board, current_player, -self.WIN_SCORE)
+            elif board.is_draw():
+                return self.cache_and_return(board, current_player, 0)
+            elif depth == 0:
+                h_score = self.heuristic(board, current_player, opponent)
+                return self.cache_and_return(board, current_player, h_score)
+
+            if current_player.is_white:
+                max_score = -math.inf
+                for move in board.available_full_moves(current_player):
+                    temp_board = copy.deepcopy(board)
+                    temp_board.full_move(current_player, move)
+                    score = self.minmax_score(temp_board, opponent, current_player, depth - 1)
+                    max_score = max(score, max_score)
+                return self.cache_and_return(board, current_player, max_score)
+
+            else:
+                min_score = math.inf
+                for move in board.available_full_moves(current_player):
+                    temp_board = copy.deepcopy(board)
+                    temp_board.full_move(current_player, move)
+                    score = self.minmax_score(temp_board, opponent, current_player, depth - 1)
+                    min_score = min(score, min_score)
+                return self.cache_and_return(board, current_player, min_score)
+        else:
+            return self.cache[board_key]
