@@ -2,6 +2,7 @@
 import checkers
 from helper import Point
 import minmax
+from player import *
 
 
 # Press Shift+F10 to execute it or replace it with your code.
@@ -17,15 +18,15 @@ def print_hi(name):
 if __name__ == '__main__':
     brd = checkers.Board()
     brd.debug = True
-    brd.init_board()
-   #  brd.board[2][1] = checkers.Piece(2, 1, False, is_king=False)
-   #  brd.board[3][2] = checkers.Piece(3, 2, True, is_king=False)
-   #  brd.board[5][4] = checkers.Piece(5, 4, True, is_king=False)
-   #  brd.board[5][6] = checkers.Piece(5, 6, True, is_king=False)
-   #  brd.board[5][2] = checkers.Piece(5, 2, True, is_king=False)
-   #  brd.board[3][4] = checkers.Piece(3, 4, True, is_king=False)
-   # # brd.board[1][4] = checkers.Piece(1, 4, True, is_king=False)
-   #  brd.board[3][6] = checkers.Piece(3, 6, True, is_king=False)
+    #brd.init_board()
+    brd.board[2][1] = checkers.Piece(2, 1, False, is_king=False)
+    brd.board[3][2] = checkers.Piece(3, 2, True, is_king=False)
+    brd.board[5][4] = checkers.Piece(5, 4, True, is_king=False)
+    brd.board[5][6] = checkers.Piece(5, 6, True, is_king=False)
+    brd.board[5][2] = checkers.Piece(5, 2, True, is_king=False)
+    brd.board[3][4] = checkers.Piece(3, 4, True, is_king=False)
+   # brd.board[1][4] = checkers.Piece(1, 4, True, is_king=False)
+    brd.board[3][6] = checkers.Piece(3, 6, True, is_king=False)
 
 
 # print(Point(3,2))

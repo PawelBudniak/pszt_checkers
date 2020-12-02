@@ -1,9 +1,10 @@
 import checkers
 import copy
 import math
+import player
 
 
-class MinmaxAI(checkers.Player):
+class MinmaxAI(player.Player):
 
     def __init__(self,is_white, opponent=None, depth=5):
         super().__init__(is_white)
@@ -22,14 +23,17 @@ class MinmaxAI(checkers.Player):
             temp_board.full_move(self, move)
             new_score = self.minmax_score(temp_board, self.opponent, self, depth=self.depth, alpha=-math.inf, beta=math.inf)
             all_scores.append(new_score)
+            # white maximizes
             if self.is_white:
                 if best_score is None or new_score > best_score:
                     best_score = new_score
                     best_move = move
+            # black minimizes
             else:
                 if best_score is None or new_score < best_score:
                     best_score = new_score
                     best_move = move
+
         print(best_score)
         for i in range(len(all_scores)):
             print(all_scores[i], moves[i])
@@ -68,13 +72,12 @@ class MinmaxAI(checkers.Player):
                 temp_board.full_move(current_player, move)
                 score = self.minmax_score(temp_board, opponent, current_player, depth - 1, alpha, beta)
                 min_score = min(score, min_score)
-                beta = min(alpha, min_score)
+                beta = min(beta, min_score)
                 if beta <= alpha:
                     break
             return min_score
 
     def heuristic(self, board, current_player, opponent, man_val=1, king_val=5):
-        # player_score, opponent_score = 0
 
         # current_player_score = self.get_score(current_player, board, man_val, king_val)
         # opponent_score = self.get_score(opponent, board, man_val, king_val)

@@ -1,5 +1,7 @@
 from enum import Enum
 import copy
+from player import *
+
 
 from helper import *
 
@@ -61,16 +63,16 @@ class Board:
         should_capture = self._should_capture(player)
 
         while processing:
-            x = self.score.copy()
+            prev_score = self.score.copy()
             if not self.move(player, move_from, move_to):
                 self.board = board
                 return False
-            if x == self.score and should_capture:
+            if prev_score == self.score and should_capture:
                 self.board = board
                 print("Player required to capture, wrong move")
                 return False
             # player can move multiple times only when capturing
-            if x == self.score and chosen_path:
+            if prev_score == self.score and chosen_path:
                 print("Too many move choices, wrong move")
                 self.board = board
                 return False
@@ -79,7 +81,7 @@ class Board:
                 break
             move_from = move_to
             move_to = chosen_path.pop(0)
-            if x == self.score and board[move_to.y][move_to.x].is_king:
+            if prev_score == self.score and board[move_to.y][move_to.x].is_king:
                 if self.board[move_to.y][move_to.x].is_white:
                     self.white_queen_moves += 1
                 else:
@@ -435,8 +437,8 @@ class Piece:
     def __init__(self, y, x, is_white, is_king=False):
         self.is_white = is_white
         self.is_king = is_king
-        self.y = y
         self.x = x
+        self.y = y
 
     def __str__(self):
         if self.is_white:
@@ -446,36 +448,10 @@ class Piece:
         if self.is_king:
             char = char.upper()
         return char
+
     def __repr__(self):
         return self.__str__()
 
-
-class Player:
-
-    def __init__(self, is_white):
-        self.is_white = is_white
-
-    def get_move(self, board):
-        moves = input(
-            "Is white = " + str(self.is_white) + "\nEnter coordinates: <from_y> <from_x> <to_y> <to_x>").split()
-        moves = [int(x) for x in moves]  # albo result = list(map(int, moves))
-        result = []
-        for i in range(0, len(moves), 2):
-            result.append(Point(moves[i], moves[i+1]))
-        print(result)
-        return result
-
-    def get_pieces(self, board):
-        return board.get_pieces(self)
-
-
-class MinmaxAI(Player):
-
-    def get_move(self):
-        pass
-
-    def minmax_score(self):
-        pass
 
 
 if __name__ == '__main__':

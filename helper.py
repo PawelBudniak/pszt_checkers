@@ -1,4 +1,4 @@
-import itertools
+
 
 def average(x, y):
     return int((x + y) / 2)
@@ -24,8 +24,3 @@ class Point:
 
     def __repr__(self):
         return self.__str__()
-
-def grouper(n, iterable, fillvalue=None):
-    """grouper(3, 'ABCDEFG', 'x') --> ABC DEF Gxx"""
-    args = [iter(iterable)] * n
-    return itertools.zip_longest(*args, fillvalue=fillvalue)
