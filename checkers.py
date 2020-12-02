@@ -11,7 +11,6 @@ class Board:
     def __init__(self):
         self.board = [[None for i in range(self.BOARD_SIZE)]
                       for j in range(self.BOARD_SIZE)]
-        self.init_board()
         self.debug = False
         self.score = [self.PIECES_COUNT, self.PIECES_COUNT]
         self.white_queen_moves = 0
@@ -31,14 +30,6 @@ class Board:
             return False
         else:
             return None
-        # counts = self.count_pieces2()
-        # if counts[1] == 0 or not self._can_move(Player(is_white=False)):
-        #     return True
-        # elif counts[0] == 0 or not self._can_move(Player(is_white=True)):
-        #     return False
-        # else:
-        #     return None
-
 
 
     def count_pieces(self):
@@ -50,18 +41,6 @@ class Board:
                     self.score[0] += 1
                 elif piece is not None and not piece.is_white:
                     self.score[1] += 1
-
-    def count_pieces2(self):
-        score = [0,0]
-        for y in range(self.BOARD_SIZE):
-            for x in range(self.BOARD_SIZE):
-                piece = self.board[y][x]
-                if piece is not None and piece.is_white:
-                    self.score[0] += 1
-                elif piece is not None and not piece.is_white:
-                    self.score[1] += 1
-        return score
-
 
 
 

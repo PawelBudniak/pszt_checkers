@@ -17,6 +17,7 @@ def print_hi(name):
 if __name__ == '__main__':
     brd = checkers.Board()
     brd.debug = True
+    brd.init_board()
    #  brd.board[2][1] = checkers.Piece(2, 1, False, is_king=False)
    #  brd.board[3][2] = checkers.Piece(3, 2, True, is_king=False)
    #  brd.board[5][4] = checkers.Piece(5, 4, True, is_king=False)
@@ -40,7 +41,7 @@ if __name__ == '__main__':
     print(f'scores = {brd.score}')
     #player2 = checkers.Player(is_white=True)
     player2 = minmax.MinmaxAI(is_white=True)
-    player1 = minmax.MinmaxAI(is_white=False, opponent=player2, depth=2)
+    player1 = minmax.MinmaxAI(is_white=False, opponent=player2, depth=8)
     player2.opponent = player1
     player2.depth = 5
 
