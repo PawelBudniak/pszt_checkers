@@ -9,7 +9,6 @@ class MyTestCase(unittest.TestCase):
         brd = Board()
         brd.board[4][1] = Piece(4, 1, is_white=True, is_king=False)
         self.assertTrue(brd.white_won())
-        print("Test 1")
 
     def test_can_move(self):
         brd = Board()
@@ -20,7 +19,6 @@ class MyTestCase(unittest.TestCase):
         brd.black_player = Player(is_white=False)
         brd.count_pieces()
         self.assertFalse(brd._can_move(brd.white_player))
-        print("Test 2")
 
     def test_should_catpture(self):
         brd = Board()
@@ -32,7 +30,6 @@ class MyTestCase(unittest.TestCase):
         brd.board[6][4] = Piece(5, 0, is_white=True, is_king=False)
         self.assertTrue(brd._should_capture(brd.white_player))
         self.assertFalse(brd._should_capture(brd.black_player))
-        print("Test 3")
 
     def test_is_draw(self):
         brd = Board()

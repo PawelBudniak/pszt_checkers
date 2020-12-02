@@ -1,4 +1,5 @@
 from helper import Point
+
 class Player:
 
     def __init__(self, is_white):

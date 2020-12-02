@@ -51,7 +51,7 @@ class Board:
         if chosen_path is None:
             print(f'white won: {self.white_won()}')
             return False
-        print("Procesowana sciezka: " + str(chosen_path))
+        # print("Procesowana sciezka: " + str(chosen_path))
         processing = True
         chosen_path = copy.deepcopy(chosen_path)
         move_from = chosen_path.pop(0)
@@ -333,8 +333,9 @@ class Board:
             normal_tree = [[start, move] for move in normal_moves]
             all_normal_moves.extend(normal_tree)
 
+        #  if available captures, they need to be executed
         if all_captures:
-            return all_captures
+            return sorted(all_captures, key=len)
         else:
             return all_normal_moves
 
@@ -360,10 +361,10 @@ class Board:
 
     def capture_trees(self, player, start):
         captures = self.available_captures(player, start)
-        if start.y == 6 and start.x == 5:
-            print('d00psko')
+        #if start.y == 6 and start.x == 5:
+            #print('d00psko')
         if not captures:
-            print(f'siema: {start}')
+            #print(f'siema: {start}')
             return [[start]]
         board_copy = copy.deepcopy(self.board)
         score_copy = copy.deepcopy(self.score)
@@ -415,7 +416,7 @@ class Board:
     def _try_king(self, player, point):
         if (player.is_white and point.y == 0 or
                 not player.is_white and point.y == self.BOARD_SIZE - 1):
-            self._get_king(self, player, point)
+            self._get_king(player, point)
 
     def get_pieces(self, player):
         pieces = []
