@@ -11,7 +11,7 @@ class Board:
     def __init__(self):
         self.board = [[None for i in range(self.BOARD_SIZE)]
                       for j in range(self.BOARD_SIZE)]
-        #self.init_board()
+        # self.init_board()
         self.debug = False
         self.score = [self.PIECES_COUNT, self.PIECES_COUNT]
 
@@ -19,8 +19,8 @@ class Board:
         board = copy.deepcopy(self.board)
         print("Procesowana sciezka: " + str(chosen_path))
         processing = True
-        move_from = Point(chosen_path.pop(0), chosen_path.pop(0))
-        move_to = Point(chosen_path.pop(0), chosen_path.pop(0))
+        move_from = chosen_path.pop(0)
+        move_to = chosen_path.pop(0)
 
         should_capture = self._should_capture(player)
 
@@ -42,16 +42,15 @@ class Board:
             if not chosen_path:
                 break
             move_from = move_to
-            move_to = (chosen_path.pop(0), chosen_path.pop(0))
+            move_to = chosen_path.pop(0)
 
         return True
 
     def _should_capture(self, player):
         for piece in self.get_pieces(player):
-            if self.available_captures(player, (piece.y, piece.x)):
+            if self.available_captures(player, Point(piece.y, piece.x)):
                 return True
         return False
-
 
     def move(self, player, start, to):
         # miki
@@ -79,7 +78,7 @@ class Board:
                 else:
                     self.score[1] -= 1
         self.board[to.y][to.x], self.board[start.y][start.x] = self.board[start.y][start.x], \
-                                                                             self.board[to.y][to.x]
+                                                               self.board[to.y][to.x]
         # if from_piece.is_white and to.y == 0 or (not from_piece.is_white) and to.y == self.BOARD_SIZE - 1:
         #     from_piece.is_king = True
         self._try_king(player, to)
@@ -247,24 +246,24 @@ class Board:
             for el in range(self.BOARD_SIZE):
                 if self.is_legal_move(player, start, Point(row, el))[0]:
                     move_list.append(Point(row, el))
-        #print(move_list)
+        # print(move_list)
         return move_list
-
 
     # TODO: pilnowac piece.y i piece.x i chyba score przy tyych wszystkich biciach
     def available_full_moves(self, player):
-        full_moves = []
+        all_captures = []
+        all_normal_moves = []
         for piece in player.get_pieces(self):
             start = Point(piece.y, piece.x)
             capture_tree = self.capture_trees(player, start)
-            capture_tree.pop() # usuwa taka liste co ma sam pionek startowy, jakos to trzeba zmienic bo jest brzydko
+            capture_tree.pop()  # usuwa taka liste co ma sam pionek startowy, jakos to trzeba zmienic bo jest brzydko
             # since we build the tree starting from the latest moves, we need to reverse it
             capture_tree = [list(reversed(alist)) for alist in capture_tree]
-            full_moves.extend(capture_tree)
+            all_captures.extend(capture_tree)
 
             normal_moves = self.available_moves(player, Point(piece.y, piece.x))
             normal_tree = [[start, move] for move in normal_moves]
-            full_moves.extend(normal_tree)
+            all_normal_moves.extend(normal_tree)
 
             # captures = self.available_captures(player, start)
             # if len(captures) > 0:
@@ -274,7 +273,12 @@ class Board:
             #         full_moves.extend(self.capture_trees(player, capture))
             #         #full_moves.extend(self._capture_possibilities(player, capture, list(), [start]))
             #     self.board = board_copy
-        return full_moves
+        # if there is a capture possible it must be executed
+        if all_captures:
+            return all_captures
+        # otherwise normal moves are allowed
+        else:
+            return all_normal_moves
 
     # def _capture_possibilities(self, player, start, all_moves, move_chain):
     #     captures = self.available_captures(player, start)
@@ -304,6 +308,7 @@ class Board:
             print(f'siema: {start}')
             return [[start]]
         board_copy = copy.deepcopy(self.board)
+        score_copy = copy.deepcopy(self.score)
         tree = []
         for capture in captures:
             self.board = copy.deepcopy(board_copy)
@@ -314,11 +319,9 @@ class Board:
                 alist.append(start)
             tree.extend((child_tree))
         self.board = board_copy
+        self.score = score_copy
         tree.append([start])
         return tree
-
-
-
 
     # list all available captures
     def available_captures(self, player, start):
@@ -327,7 +330,7 @@ class Board:
             for el in range(self.BOARD_SIZE):
                 if self.is_legal_capture(player, start, Point(row, el))[0]:
                     move_list.append(Point(row, el))
-        #print(move_list)
+        # print(move_list)
         return move_list
 
     def init_board(self):
@@ -408,6 +411,7 @@ class Piece:
         if self.is_king:
             char = char.upper()
         return char
+
     def __repr__(self):
         return self.__str__()
 
@@ -420,7 +424,11 @@ class Player:
     def get_move(self, board):
         moves = input(
             "Is white = " + str(self.is_white) + "\nEnter coordinates: <from_y> <from_x> <to_y> <to_x>").split()
-        result = [int(x) for x in moves]  # albo result = list(map(int, moves))
+        moves = [int(x) for x in moves]  # albo result = list(map(int, moves))
+        result = []
+        for i in range(0, len(moves), 2):
+            result.append(Point(moves[i], moves[i+1]))
+        print(result)
         return result
 
     def get_pieces(self, board):

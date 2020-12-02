@@ -5,7 +5,8 @@ import math
 
 class MinmaxAI(checkers.Player):
 
-    def __init__(self, opponent=None, depth=5):
+    def __init__(self,is_white, opponent=None, depth=5):
+        super().__init__(is_white)
         self.opponent = opponent
         self.depth = depth
 
@@ -16,7 +17,7 @@ class MinmaxAI(checkers.Player):
         for move in board.available_full_moves(self):
             temp_board = copy.deepcopy(board)
             temp_board.full_move(self, move)
-            new_score = self.minimax_score(temp_board, self.opponent, self, depth=10, alpha=-math.inf, beta=math.inf)
+            new_score = self.minimax_score(temp_board, self.opponent, self, depth=self.depth, alpha=-math.inf, beta=math.inf)
             if self.is_white:
                 if best_score is None or new_score > best_score:
                     best_score = new_score
