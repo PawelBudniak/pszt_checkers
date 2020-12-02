@@ -14,9 +14,26 @@ class Board:
         #self.init_board()
         self.debug = False
         self.score = [self.PIECES_COUNT, self.PIECES_COUNT]
+        self.white_queen_moves = 0
+        self.black_queen_moves = 0
+
+    def is_draw(self):
+        return self.white_queen_moves >= 15 and self.black_queen_moves >= 15
+
+    def player_won(self):
+        if self.score[0] == 0 or not self._can_move(Player(False)):
+            return True
+        elif self.score[1] == 0 or not self._can_move(Player(True)):
+            return False
+        else:
+            return None
+
 
     def full_move(self, player, chosen_path):
         board = copy.deepcopy(self.board)
+        if len(chosen_path) < 4 or len(chosen_path)%2 != 0:
+            print("wrong coords")
+            return False
         print("Procesowana sciezka: " + str(chosen_path))
         processing = True
         move_from = Point(chosen_path.pop(0), chosen_path.pop(0))
@@ -39,19 +56,29 @@ class Board:
                 self.board = board
                 return False
             should_capture = False
+
             if not chosen_path:
                 break
             move_from = move_to
             move_to = (chosen_path.pop(0), chosen_path.pop(0))
-
+            if x == self.score and board[move_to.y][move_to.x].is_king:
+                if self.board[move_to.y][move_to.x].is_white:
+                    self.white_queen_moves += 1
+                else:
+                    self.black_queen_moves += 1
         return True
 
     def _should_capture(self, player):
         for piece in self.get_pieces(player):
-            if self.available_captures(player, (piece.y, piece.x)):
+            if self.available_captures(player, Point(piece.y, piece.x)):
                 return True
         return False
 
+    def _can_move(self, player):
+        for piece in self.get_pieces(player):
+            if self.available_actions(player, Point(piece.y, piece.x)):
+                return True
+        return False
 
     def move(self, player, start, to):
         # miki
@@ -69,8 +96,10 @@ class Board:
                     self.board[move_analysis[1][0]][move_analysis[1][1]] = None
                     if player.is_white:
                         self.score[0] -= 1
+                        self.white_queen_moves = 0
                     else:
                         self.score[1] -= 1
+                        self.black_queen_moves = 0
         elif not from_piece.is_king:
             if abs(to.y - start.y) == 2:
                 self.board[average(to.y, start.y)][average(to.x, start.x)] = None
@@ -250,6 +279,14 @@ class Board:
         #print(move_list)
         return move_list
 
+    def available_actions(self, player, start):
+        action_list = []
+        for row in range(self.BOARD_SIZE):
+            for el in range(self.BOARD_SIZE):
+                if self.is_legal_action(player, start, Point(row, el))[0]:
+                    action_list.append(Point(row, el))
+        # print(move_list)
+        return action_list
 
     # TODO: pilnowac piece.y i piece.x i chyba score przy tyych wszystkich biciach
     def available_full_moves(self, player):
