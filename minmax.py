@@ -5,16 +5,26 @@ import math
 
 class MinmaxAI(checkers.Player):
 
+    def __init__(self, opponent=None, depth=5):
+        self.opponent = opponent
+        self.depth = depth
+
+
     def get_move(self, board):
         best_score = None
         best_move = None
-        for move in board.available_moves():
+        for move in board.available_full_moves(self):
             temp_board = copy.deepcopy(board)
-            temp_board.move(self, move[0], move[1])
-            new_score = self.minimax_score(temp_board, self.opponent_symbol, depth=10)
-            if best_score is None or new_score > best_score:
-                best_score = new_score
-                best_move = move
+            temp_board.full_move(self, move)
+            new_score = self.minimax_score(temp_board, self.opponent, self, depth=10, alpha=-math.inf, beta=math.inf)
+            if self.is_white:
+                if best_score is None or new_score > best_score:
+                    best_score = new_score
+                    best_move = move
+            else:
+                if best_score is None or new_score < best_score:
+                    best_score = new_score
+                    best_move = move
         return best_move
 
     def minmax_score(self, board, current_player, opponent, depth, alpha, beta):
@@ -22,18 +32,18 @@ class MinmaxAI(checkers.Player):
 
         # przekazywanie wszedzie player i opponent dosc brzydkie wiec jesli board trzyma czyja tura to bym tego uzywal pozniej
 
-        if board.winner() == current_player:
+        if board.winner().is_white:
             return 1
-        elif board.winner() == self.opponent_symbol:
+        elif not board.winner().is_white:
             return -1
         elif board.is_draw():
             return 0
         elif depth == 0:
             return self.heuristic(board, current_player, opponent)
 
-        if current_player.is_white():
+        if current_player.is_white:
             max_score = -math.inf
-            for move in board.available_full_moves():
+            for move in board.available_full_moves(current_player):
                 temp_board = copy.deepcopy(board)
                 temp_board.full_move(current_player, move)
                 score = self.minmax_score(self, temp_board, opponent, current_player, depth - 1, alpha, beta)
@@ -62,7 +72,7 @@ class MinmaxAI(checkers.Player):
 
         score = abs(current_player_score - opponent_score)
         # return negative value if the current player is black (the minimizer)
-        return score if self.is_white() == current_player.is_white() else -score
+        return score if current_player.is_white else -score
 
     def get_score(self, current_player, board, man_val, king_val):
         score = 0

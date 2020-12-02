@@ -251,7 +251,8 @@ class Board:
             start = Point(piece.y, piece.x)
             capture_tree = self.capture_trees(player, start)
             capture_tree.pop() # usuwa taka liste co ma sam pionek startowy, jakos to trzeba zmienic bo jest brzydko
-            capture_tree = [list(reversed(alist)) for alist in capture_tree] # since we build the tree from the latest moves we need to reverse it
+            # since we build the tree starting from the latest moves, we need to reverse it
+            capture_tree = [list(reversed(alist)) for alist in capture_tree]
             full_moves.extend(capture_tree)
 
             normal_moves = self.available_moves(player, Point(piece.y, piece.x))
