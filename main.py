@@ -17,12 +17,14 @@ def print_hi(name):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    minmax.clear_cache()
     white_player = minmax.MinmaxAI(is_white=True)
-    black_player = minmax.MinmaxAI(is_white=False, opponent=white_player, depth=4)
+    black_player = minmax.MinmaxAI(is_white=False, opponent=white_player, depth=1)
+    #black_player = Player()
     white_player.opponent = black_player
-    white_player.depth = 4
+    white_player.depth = 5
     game = game.Game(white_player, black_player)
-    game.play(show_display=True, cache_black_player=True, cache_white_player=True)
+    game.play(show_display=True, cache_black_player=False, cache_white_player=True)
 
 #  brd = checkers.Board()
 #  brd.debug = True

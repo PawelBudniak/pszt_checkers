@@ -24,3 +24,16 @@ class Point:
 
     def __repr__(self):
         return self.__str__()
+
+    def __eq__(self, other):
+        if isinstance(other, Point):
+            return self.x == other.x and self.y == other.y
+        return False
+
+    def __hash__(self):
+        return hash((self.x, self.y))
+
+    def __lt__(self, other):
+        return (self.x < other.x and self.y < other.y or
+                self.x == other.x and self.y < other.x)
+

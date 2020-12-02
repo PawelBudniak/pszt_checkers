@@ -13,7 +13,7 @@ def clear_cache():
 class MinmaxAI(player.Player):
 
     CACHE_FILE = 'board_scores.json'
-    WIN_SCORE = 1000
+    WIN_SCORE = math.inf
 
 
     def __init__(self,is_white, opponent=None, depth=5, noab=False, nocache=False, nosort=False):
@@ -126,11 +126,45 @@ class MinmaxAI(player.Player):
         else:
             return self.cache[board_key]
 
+    # def minmax_score(self, board, current_player, opponent, depth, alpha, beta):
+    #
+    #     # white is the maximizer
+    #     if not self.nocache:
+    #         board_key = board.key(current_player)
+    #
+    #     if self.nocache or board_key not in self.cache:
+    #         if board.white_won() is True:
+    #             return self.cache_and_return(board, current_player, self.WIN_SCORE)
+    #         elif board.white_won() is False:
+    #             return self.cache_and_return(board, current_player, -self.WIN_SCORE)
+    #         elif board.is_draw():
+    #             return self.cache_and_return(board, current_player, 0)
+    #         elif depth == 0:
+    #             h_score = self.heuristic(board, current_player, opponent)
+    #             return self.cache_and_return(board, current_player, h_score)
+    #
+    #         if current_player.is_white:
+    #             for move in board.available_full_moves(current_player):
+    #                 temp_board = copy.deepcopy(board)
+    #                 temp_board.full_move(current_player, move)
+    #                 alpha = max(alpha, self.minmax_score(temp_board, opponent, current_player, depth - 1, alpha, beta))
+    #                 if alpha >= beta:
+    #                     break
+    #             return self.cache_and_return(board, current_player, beta)
+    #
+    #         else:
+    #             for move in board.available_full_moves(current_player):
+    #                 temp_board = copy.deepcopy(board)
+    #                 temp_board.full_move(current_player, move)
+    #                 beta = min(beta, self.minmax_score(temp_board, opponent, current_player, depth - 1, alpha, beta))
+    #                 if alpha >= beta:
+    #                     break
+    #             return self.cache_and_return(board, current_player, alpha)
+    #     else:
+    #         return self.cache[board_key]
+
 
     def heuristic(self, board, current_player, opponent, man_val=1, king_val=5):
-
-        # current_player_score = self.get_score(current_player, board, man_val, king_val)
-        # opponent_score = self.get_score(opponent, board, man_val, king_val)
         white_score = self.get_score(True, board, man_val, king_val)
         black_score = self.get_score(False, board, man_val, king_val)
 
