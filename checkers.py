@@ -431,6 +431,19 @@ class Board:
             print_horizontal_lines()
         print('')  # newline
 
+    def key(self, player):
+        whites_turn = player.is_white
+        key = str(whites_turn) + '\n'
+        for col in self.board:
+            for cell in col:
+                if cell is not None:
+                    key += (str(cell))
+                else:
+                    key += '-'
+            key += '\n'
+        return key
+
+
 
 class Piece:
 

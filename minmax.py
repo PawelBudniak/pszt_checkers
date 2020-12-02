@@ -2,14 +2,33 @@ import checkers
 import copy
 import math
 import player
+import json
 
 
 class MinmaxAI(player.Player):
+
+    CACHE_FILE = 'board_scores.json'
+    WIN_SCORE = 1000
 
     def __init__(self,is_white, opponent=None, depth=5):
         super().__init__(is_white)
         self.opponent = opponent
         self.depth = depth
+        self.cache = self.load_cache()
+
+    def load_cache(self):
+        with open(self.CACHE_FILE, 'r') as fp:
+            try:
+                return json.load(fp)
+            # if file is empty cache is empty
+            except json.decoder.JSONDecodeError:
+                return {}
+
+
+    def save_cache(self):
+        with open(self.CACHE_FILE, 'w') as fp:
+            json.dump(self.cache, fp)
+
 
 
     def get_move(self, board):
@@ -40,42 +59,52 @@ class MinmaxAI(player.Player):
 
         return best_move
 
+    def cache_and_return(self, board, current_player, score):
+        self.cache[board.key(current_player)] = score
+        return score
+
     def minmax_score(self, board, current_player, opponent, depth, alpha, beta):
         # white is the maximizer
+        board_key = board.key(current_player)
 
-        # przekazywanie wszedzie player i opponent dosc brzydkie wiec jesli board trzyma czyja tura to bym tego uzywal pozniej
+        if board_key not in self.cache:
+            if board.white_won() is True:
+                return self.cache_and_return(board, current_player, self.WIN_SCORE)
+            elif board.white_won() is False:
+                return self.cache_and_return(board, current_player, -self.WIN_SCORE)
+            elif board.is_draw():
+                return self.cache_and_return(board, current_player, 0)
+            elif depth == 0:
+                h_score = self.heuristic(board, current_player, opponent)
+                return self.cache_and_return(board, current_player, h_score)
 
-        if board.white_won() is True:
-            return 1000
-        elif board.white_won() is False:
-            return -1000
-        elif board.is_draw():
-            return 0
-        elif depth == 0:
-            return self.heuristic(board, current_player, opponent)
+            if current_player.is_white:
+                max_score = -math.inf
+                for move in board.available_full_moves(current_player):
+                    temp_board = copy.deepcopy(board)
+                    temp_board.full_move(current_player, move)
+                    score = self.minmax_score(temp_board, opponent, current_player, depth - 1, alpha, beta)
+                    max_score = max(score, max_score)
+                    alpha = max(alpha, max_score)
+                    if beta <= alpha:
+                        break
+                return self.cache_and_return(board, current_player, max_score)
 
-        if current_player.is_white:
-            max_score = -math.inf
-            for move in board.available_full_moves(current_player):
-                temp_board = copy.deepcopy(board)
-                temp_board.full_move(current_player, move)
-                score = self.minmax_score(temp_board, opponent, current_player, depth - 1, alpha, beta)
-                max_score = max(score, max_score)
-                alpha = max(alpha, max_score)
-                if beta <= alpha:
-                    break
-            return max_score
+            else:
+                min_score = math.inf
+                for move in board.available_full_moves(current_player):
+                    temp_board = copy.deepcopy(board)
+                    temp_board.full_move(current_player, move)
+                    score = self.minmax_score(temp_board, opponent, current_player, depth - 1, alpha, beta)
+                    min_score = min(score, min_score)
+                    beta = min(beta, min_score)
+                    if beta <= alpha:
+                        break
+                return self.cache_and_return(board, current_player, min_score)
         else:
-            min_score = math.inf
-            for move in board.available_full_moves(current_player):
-                temp_board = copy.deepcopy(board)
-                temp_board.full_move(current_player, move)
-                score = self.minmax_score(temp_board, opponent, current_player, depth - 1, alpha, beta)
-                min_score = min(score, min_score)
-                beta = min(beta, min_score)
-                if beta <= alpha:
-                    break
-            return min_score
+            return self.cache[board_key]
+
+
 
     def heuristic(self, board, current_player, opponent, man_val=1, king_val=5):
 
