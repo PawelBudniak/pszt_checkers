@@ -12,7 +12,7 @@ class Game:
         self.brd.black_player = black_player
         self.turn_count = 0
 
-    def play(self, show_display, cache_white_player, cache_black_player):
+    def play(self, show_display, cache_white_player, cache_black_player, testing=False):
 
         while self.brd.white_won() is None and self.brd.is_draw() is False:
 

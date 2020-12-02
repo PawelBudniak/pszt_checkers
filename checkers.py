@@ -333,9 +333,9 @@ class Board:
             normal_tree = [[start, move] for move in normal_moves]
             all_normal_moves.extend(normal_tree)
 
-        #  if available captures, they need to be executed
+        #  if available captures, one of them needs to be executed
         if all_captures:
-            return sorted(all_captures, key=len)
+            return all_captures
         else:
             return all_normal_moves
 

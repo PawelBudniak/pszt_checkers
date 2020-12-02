@@ -17,32 +17,29 @@ def print_hi(name):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-
-    
     white_player = minmax.MinmaxAI(is_white=True)
-    black_player = minmax.MinmaxAI(is_white=False, opponent=white_player, depth=20)
+    black_player = minmax.MinmaxAI(is_white=False, opponent=white_player, depth=4)
     white_player.opponent = black_player
-    white_player.depth = 20
+    white_player.depth = 4
     game = game.Game(white_player, black_player)
     game.play(show_display=True, cache_black_player=True, cache_white_player=True)
 
-
-   #  brd = checkers.Board()
-   #  brd.debug = True
-   #  brd.init_board()
-   # #  brd.board[2][1] = checkers.Piece(2, 1, False, is_king=False)
-   # #  brd.board[3][2] = checkers.Piece(3, 2, True, is_king=False)
-   # #  brd.board[5][4] = checkers.Piece(5, 4, True, is_king=False)
-   # #  brd.board[5][6] = checkers.Piece(5, 6, True, is_king=False)
-   # #  brd.board[5][2] = checkers.Piece(5, 2, True, is_king=False)
-   # #  brd.board[3][4] = checkers.Piece(3, 4, True, is_king=False)
-   # # brd.board[1][4] = checkers.Piece(1, 4, True, is_king=False)
-   # #  brd.board[3][6] = checkers.Piece(3, 6, True, is_king=False)
+#  brd = checkers.Board()
+#  brd.debug = True
+#  brd.init_board()
+# #  brd.board[2][1] = checkers.Piece(2, 1, False, is_king=False)
+# #  brd.board[3][2] = checkers.Piece(3, 2, True, is_king=False)
+# #  brd.board[5][4] = checkers.Piece(5, 4, True, is_king=False)
+# #  brd.board[5][6] = checkers.Piece(5, 6, True, is_king=False)
+# #  brd.board[5][2] = checkers.Piece(5, 2, True, is_king=False)
+# #  brd.board[3][4] = checkers.Piece(3, 4, True, is_king=False)
+# # brd.board[1][4] = checkers.Piece(1, 4, True, is_king=False)
+# #  brd.board[3][6] = checkers.Piece(3, 6, True, is_king=False)
 
 
 # print(Point(3,2))
 
-    #brd.display()
+# brd.display()
 
 #     player2 = checkers.Player(is_white=True)
 #     player1 = minmax.MinmaxAI(is_white=False, opponent=player2, depth=5)
