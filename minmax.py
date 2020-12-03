@@ -179,7 +179,7 @@ class MinmaxAI(player.Player):
         else:
             current_player = board.black_player
         for piece in current_player.get_pieces(board):
-            if piece.is_king:
+            if piece.is_queen:
                 score += king_val
             else:
                 score += man_val

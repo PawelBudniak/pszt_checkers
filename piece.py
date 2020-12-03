@@ -27,6 +27,9 @@ class Piece:
             char = char.upper()
         return char
 
+    def to_point(self):
+        return Point(self.y, self.x)
+
     def try_move(self, to, current_player, board):
         """
         :param
@@ -58,17 +61,24 @@ class Piece:
 
                 piece = board[y][x]
 
+                # tried to capture more than one piece
+                if captured_pieces > 1:
+                    captured_piece = None
+                    possible_action = Move.Unavailable
+                    break
+
                 if piece is not None:
 
+                    # collision with allied piece
                     if piece.is_white == self.is_white:
-                        # collision with allied piece
+                        captured_piece = None
                         possible_action = Move.Unavailable
                         break
 
+                    # came over opponents piece
                     else:
-                        # came over opponents piece
                         captured_pieces += 1
-                        captured_piece = (y, x)
+                        captured_piece = Point(y, x)
                         possible_action = Move.Capture
 
         elif not self.is_queen:
@@ -80,12 +90,13 @@ class Piece:
 
             elif abs(to.y - self.y) == 2:
 
+                piece = board[average(to.y, self.y)][average(to.x, self.x)]
+
                 # if piece in between starting and ending point is of opposite color
-
-                if board[average(to.y, self.y)][average(to.x, self.x)] is not None:
-
-                    if board[average(to.y, self.y)][average(to.x, self.x)].is_white != self.is_white:
+                if piece is not None:
+                    if piece.is_white != self.is_white:
                         possible_action = Move.Capture
+                        captured_piece = Point(piece.y, piece.x)
 
         return possible_action, captured_piece
 
@@ -110,7 +121,7 @@ class Piece:
 
         return True
 
-    def available_moves(self, current_player, board, must_capture=False):
+    def available_moves(self, current_player, board, must_capture=None):
 
         path = []
         if self.is_queen:
@@ -122,10 +133,11 @@ class Piece:
             possible_capture, captured_piece = self.try_move(el, current_player, board)
 
             if must_capture is True and possible_capture == Move.Capture \
-                    or must_capture is False and possible_capture in (Move.Capture, Move.Traverse):
-                path.append([Point(self.y, self.x), el])
-        if path:
-            return path
+                    or must_capture is None and possible_capture in (Move.Capture, Move.Traverse) \
+                        or must_capture is False and possible_capture == Move.Traverse:
+                path.append(el)
+
+        return path
 
     def get_queen_path(self):
 
