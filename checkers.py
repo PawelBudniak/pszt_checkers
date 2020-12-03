@@ -102,7 +102,7 @@ class Board:
     def move(self, player, start, to):
 
         from_piece = self.board[start.y][start.x]
-        available_move, captured_piece = from_piece.try_move()
+        available_move, captured_piece = from_piece.try_move(to, player, self.board)
         """
         Now we need to check if a piece was captured, udpate the score etc.
         """

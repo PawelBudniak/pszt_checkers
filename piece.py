@@ -87,7 +87,6 @@ class Piece:
                     if board[average(to.y, self.y)][average(to.x, self.x)].is_white != self.is_white:
                         possible_action = Move.Capture
 
-
         return possible_action, captured_piece
 
     def check_constraints(self,  to, current_player, board):

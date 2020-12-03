@@ -30,8 +30,13 @@ if __name__ == '__main__':
     board.display()
     player2 = checkers.Player(is_white=True)
     board.white_player = player2
-    #print(str(board.board[5][0].available_moves(board.white_player, board.board, must_capture=True)))
-    print(str(board.available_moves(board.white_player, capturing=True)))
+    print(str(board.move(board.white_player, Point(5, 0), Point(4, 1) )))
+    board.display()
+    print(str(board.move(board.white_player, Point(4, 1), Point(3, 2) )))
+    board.display()
+    print(str(board.move(board.white_player, Point(3, 2), Point(4, 3) )))
+    board.display()
+    #print(str(board.available_moves(board.white_player, capturing=True)))
 
 #  brd = checkers.Board()
 #  brd.debug = True
