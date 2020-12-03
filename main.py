@@ -2,6 +2,9 @@
 import checkers
 from helper import Point
 import minmax
+from player import *
+import game
+from piece import *
 
 
 # Press Shift+F10 to execute it or replace it with your code.
@@ -15,53 +18,73 @@ def print_hi(name):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    brd = checkers.Board()
-    brd.debug = True
-    brd.init_board()
-   #  brd.board[2][1] = checkers.Piece(2, 1, False, is_king=False)
-   #  brd.board[3][2] = checkers.Piece(3, 2, True, is_king=False)
-   #  brd.board[5][4] = checkers.Piece(5, 4, True, is_king=False)
-   #  brd.board[5][6] = checkers.Piece(5, 6, True, is_king=False)
-   #  brd.board[5][2] = checkers.Piece(5, 2, True, is_king=False)
-   #  brd.board[3][4] = checkers.Piece(3, 4, True, is_king=False)
-   # # brd.board[1][4] = checkers.Piece(1, 4, True, is_king=False)
-   #  brd.board[3][6] = checkers.Piece(3, 6, True, is_king=False)
+    # minmax.clear_cache()
+    # white_player = minmax.MinmaxAI(is_white=True)
+    # black_player = minmax.MinmaxAI(is_white=False, opponent=white_player, depth=1)
+    # #black_player = Player()
+    # white_player.opponent = black_player
+    # white_player.depth = 5
+    # game = game.Game(white_player, black_player)
+    # game.play(show_display=True, cache_black_player=False, cache_white_player=True)
+    board = checkers.Board()
+    board.init_board()
+    board.display()
+    print(str(board.board[1][0].get_man_path()))
+#  brd = checkers.Board()
+#  brd.debug = True
+#  brd.init_board()
+# #  brd.board[2][1] = checkers.Piece(2, 1, False, is_king=False)
+# #  brd.board[3][2] = checkers.Piece(3, 2, True, is_king=False)
+# #  brd.board[5][4] = checkers.Piece(5, 4, True, is_king=False)
+# #  brd.board[5][6] = checkers.Piece(5, 6, True, is_king=False)
+# #  brd.board[5][2] = checkers.Piece(5, 2, True, is_king=False)
+# #  brd.board[3][4] = checkers.Piece(3, 4, True, is_king=False)
+# # brd.board[1][4] = checkers.Piece(1, 4, True, is_king=False)
+# #  brd.board[3][6] = checkers.Piece(3, 6, True, is_king=False)
 
 
 # print(Point(3,2))
 
-    #brd.display()
+# brd.display()
 
-    # player1 = checkers.Player(is_white=True)
-    # player2 = minmax.MinmaxAI(is_white=False, opponent=player1, depth=5)
-    # print(brd.available_full_moves(player2))
-
-    # #brd.board[6][5] = None
-    brd.count_pieces()
-    print(f'scores = {brd.score}')
-    #player2 = checkers.Player(is_white=True)
-    player2 = minmax.MinmaxAI(is_white=True)
-    player1 = minmax.MinmaxAI(is_white=False, opponent=player2, depth=8)
-    player2.opponent = player1
-    player2.depth = 5
-
-    brd.black_player = player1
-    brd.white_player = player2
-    #player2 = checkers.Player(is_white=False)
-    running = True
-    temp = False
-    while brd.white_won() is None and brd.is_draw() is False:
-        brd.display()
-        move = player1.get_move(brd)
-        while not brd.full_move(player1, move):
-            move = player1.get_move(brd)
-            brd.display()
-        brd.display()
-        print(f'scores = {brd.score}')
-        move = player2.get_move(brd)
-        while not brd.full_move(player2, move):
-            move = player2.get_move(brd)
-            brd.display()
+#     player2 = checkers.Player(is_white=True)
+#     player1 = minmax.MinmaxAI(is_white=False, opponent=player2, depth=5)
+#     brd.black_player = player1
+#     brd.white_player = player2
+#     print(brd.available_full_moves(player2))
+#
+#     # #brd.board[6][5] = None
+# #     brd.count_pieces()
+# #     print(f'scores = {brd.score}')
+# #     #player2 = checkers.Player(is_white=True)
+# #     player2 = minmax.MinmaxAI(is_white=True)
+# #     player1 = minmax.MinmaxAI(is_white=False, opponent=player2, depth=8)
+# #     player2.opponent = player1
+# #     player2.depth = 5
+# #
+#     # brd.black_player = player1
+#     # brd.white_player = player2
+# #     #player2 = checkers.Player(is_white=False)
+# #     running = True
+# #     temp = False
+#     while brd.white_won() is None and brd.is_draw() is False:
+#         brd.display()
+#         move = player1.get_move(brd)
+#         while not brd.full_move(player1, move):
+#             move = player1.get_move(brd)
+#             brd.display()
+#         # print ("------------------------")
+#         # print(f'typ: {type(player1.cache)}')
+#         # print(player1.cache)
+#         player1.save_cache()
+#         brd.display()
+#         print(f'scores = {brd.score}')
+#         move = player2.get_move(brd)
+#         while not brd.full_move(player2, move):
+#             move = player2.get_move(brd)
+#             brd.display()
+#
+#     player1.save_cache()
 # #
 # print("woohoo someone won")
 #     # player 2
