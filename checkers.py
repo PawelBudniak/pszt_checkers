@@ -12,8 +12,8 @@ class Board:
     def __init__(self):
         self.board = [[None for i in range(self.BOARD_SIZE)]
                       for j in range(self.BOARD_SIZE)]
-        # self.init_board()
-        self.debug = False
+        self.init_board()
+        self.debug = True
         self.score = [self.PIECES_COUNT, self.PIECES_COUNT]
         self.white_queen_moves = 0
         self.black_queen_moves = 0
@@ -88,17 +88,17 @@ class Board:
 
     def _should_capture(self, player):
         for piece in self.get_pieces(player):
-            if self.available_moves(player, Point(piece.y, piece.x), must_capture=True):
+            if piece.available_moves(player, Point(piece.y, piece.x), self.board, must_capture=True):
                 return True
         return False
 
     def _can_move(self, player):
         for piece in self.get_pieces(player):
-            if self.available_moves(player, Point(piece.y, piece.x)):
+            if piece.available_moves(player, Point(piece.y, piece.x), self.board):
                 return True
         return False
 
-    # TODO fix move function, already implemented a method in Piece class
+    # TODO test
     def move(self, player, start, to):
 
         from_piece = self.board[start.y][start.x]
@@ -106,7 +106,7 @@ class Board:
         """
         Now we need to check if a piece was captured, udpate the score etc.
         """
-        if available_move is None:
+        if available_move  == Move.Unavailable:
             return False
         self._execute_move(start, to, captured_piece)
         self._update_data(available_move, player)
@@ -122,39 +122,49 @@ class Board:
 
     def _update_data(self, available_move, player):
 
-        if available_move is True:
+        if available_move == Move.Capture:
             if player.is_white:
                 self.white_queen_moves = 0
             else:
                 self.black_queen_moves = 0
             self.count_pieces()
 
+    def available_moves(self, player, capturing):
+        moves = []
+        for piece in self.get_pieces(player):
+
+            # print("(" + str(piece.y) + " " + str(piece.x) + ") can move to: "
+            #       + str(piece.available_moves(player, self.board, capturing)))
+            piece_moves = piece.available_moves(player, self.board, capturing)
+            if piece_moves:
+                moves.append(piece_moves)
+        return moves
+
 
     # TODO redo this shit
-    #
-    # def available_full_moves(self, player):
-    #     all_captures = []
-    #     all_normal_moves = []
-    #
-    #     for piece in player.get_pieces(self):
-    #         start = Point(piece.y, piece.x)
-    #         capture_tree = self.capture_trees(player, start)
-    #         # remove the last element - it contains only the starting point
-    #         capture_tree.pop()
-    #         # since we build the tree starting from the latest moves, we need to reverse it
-    #         capture_tree = [list(reversed(alist)) for alist in capture_tree]
-    #         all_captures.extend(capture_tree)
-    #
-    #         normal_moves = self.available_moves(player, Point(piece.y, piece.x))
-    #         normal_tree = [[start, move] for move in normal_moves]
-    #         all_normal_moves.extend(normal_tree)
-    #
-    #     #  if captures available, one of them needs to be executed
-    #     if all_captures:
-    #         return all_captures
-    #     # otherwise only non-capture moves are available
-    #     else:
-    #         return all_normal_moves
+    def available_full_moves(self, player):
+        all_captures = []
+        all_normal_moves = []
+
+        for piece in player.get_pieces(self):
+            start = Point(piece.y, piece.x)
+            capture_tree = self.capture_trees(player, start)
+            # remove the last element - it contains only the starting point
+            capture_tree.pop()
+            # since we build the tree starting from the latest moves, we need to reverse it
+            capture_tree = [list(reversed(alist)) for alist in capture_tree]
+            all_captures.extend(capture_tree)
+
+            normal_moves = self.available_moves(player, Point(piece.y, piece.x))
+            normal_tree = [[start, move] for move in normal_moves]
+            all_normal_moves.extend(normal_tree)
+
+        #  if captures available, one of them needs to be executed
+        if all_captures:
+            return all_captures
+        # otherwise only non-capture moves are available
+        else:
+            return all_normal_moves
 
     def capture_trees(self, player, start):
 

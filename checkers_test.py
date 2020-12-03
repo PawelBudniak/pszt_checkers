@@ -1,5 +1,6 @@
 import unittest
 from checkers import *
+from piece import *
 
 class MyTestCase(unittest.TestCase):
     def test_white_won(self):

@@ -27,9 +27,12 @@ if __name__ == '__main__':
     # game = game.Game(white_player, black_player)
     # game.play(show_display=True, cache_black_player=False, cache_white_player=True)
     board = checkers.Board()
-    board.init_board()
     board.display()
-    print(str(board.board[1][0].get_man_path()))
+    player2 = checkers.Player(is_white=True)
+    board.white_player = player2
+    #print(str(board.board[5][0].available_moves(board.white_player, board.board, must_capture=True)))
+    print(str(board.available_moves(board.white_player, capturing=True)))
+
 #  brd = checkers.Board()
 #  brd.debug = True
 #  brd.init_board()

@@ -2,6 +2,12 @@ from checkers import *
 from helper import *
 
 
+class Move:
+    Capture = 2
+    Traverse = 1
+    Unavailable = 0
+
+
 class Piece:
 
     BOARD_SIZE = 8
@@ -28,23 +34,23 @@ class Piece:
         to: coordinates of destined move
         :return
         possible_action:
-            True - possible capture
-            False - possible move
-            None - unavailable action
-        captured_piece: coordinates of a captured piece
+            Move.Capture - possible capture
+            Move.Traverse - possible traversal meaning no capture
+            Move.Unavailable - unavailable action
+        captured_piece: coordinates of a captured piece - set to None if not capturing
         """
 
-        possible_action = None
+        possible_action = Move.Unavailable
         captured_piece = None
 
         if not self.check_constraints(to, current_player, board):
             return possible_action, captured_piece
 
         if self.is_queen:
-
             # look for any pieces on the kings path
             # shift ranges by dx and dy so it goes from [start, stop) to (start, stop] (excludes start, includes stop)
             path = get_linear_path(Point(self.y, self.x), Point(to.y, to.x))
+            possible_action = Move.Traverse
 
             captured_pieces = 0
 
@@ -56,32 +62,31 @@ class Piece:
 
                     if piece.is_white == self.is_white:
                         # collision with allied piece
-                        possible_action = False
+                        possible_action = Move.Unavailable
                         break
 
                     else:
                         # came over opponents piece
                         captured_pieces += 1
                         captured_piece = (y, x)
-                        possible_action = True
-
-            # if came over more than 1 opponent, then the move is not a viable option
-            if captured_pieces not in (0, 1):
-                possible_action = None
+                        possible_action = Move.Capture
 
         elif not self.is_queen:
 
             if abs(to.y - self.y) == 1:
-
                 # if piece is moving in the right direction
-                if current_player.is_white and to.y > self.y or (not current_player.is_white) and to.y < self.y:
-                    possible_action = False
+                if current_player.is_white and to.y < self.y or (not current_player.is_white) and to.y > self.y:
+                    possible_action = Move.Traverse
 
             elif abs(to.y - self.y) == 2:
+
                 # if piece in between starting and ending point is of opposite color
-                if board[average(to.y, self.y)][average(to.x, self.x)].is_white is not self.is_white:
-                    possible_action = True
-                    captured_piece = board[average(to.y, self.y)][average(to.x, self.x)]
+
+                if board[average(to.y, self.y)][average(to.x, self.x)] is not None:
+
+                    if board[average(to.y, self.y)][average(to.x, self.x)].is_white != self.is_white:
+                        possible_action = Move.Capture
+
 
         return possible_action, captured_piece
 
@@ -103,21 +108,25 @@ class Piece:
         # case: destination taken by another piece
         if board[to.y][to.x] is not None:
             return False
+
         return True
 
     def available_moves(self, current_player, board, must_capture=False):
 
+        path = []
         if self.is_queen:
-            path = self.get_queen_path()
+            old_path = self.get_queen_path()
         else:
-            path = self.get_man_path()
+            old_path = self.get_man_path()
+        for el in old_path:
 
-        for el in path:
             possible_capture, captured_piece = self.try_move(el, current_player, board)
-            if possible_capture is None or must_capture is True and possible_capture is not True:
-                path.remove(el)
 
-        return path
+            if must_capture is True and possible_capture == Move.Capture \
+                    or must_capture is False and possible_capture in (Move.Capture, Move.Traverse):
+                path.append([Point(self.y, self.x), el])
+        if path:
+            return path
 
     def get_queen_path(self):
 
@@ -134,7 +143,6 @@ class Piece:
                     path.append(Point(y, x))
                 y += dy
                 x += dx
-
         return path
 
     def get_man_path(self):
