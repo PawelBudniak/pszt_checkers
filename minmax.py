@@ -49,15 +49,15 @@ class MinmaxAI(player.Player):
         best_score = None
         best_move = None
         moves = board.available_full_moves(self)
-        # print(moves)
-        # all_scores = []
+        print(moves)
+        all_scores = []
         if not self.nosort:
             moves.sort(key=len)
         for move in moves:
             temp_board = copy.deepcopy(board)
             temp_board.full_move(self, move)
-            new_score = self.minmax_score(temp_board, self.opponent, self, depth=self.depth, alpha=-math.inf, beta=math.inf)
-            # all_scores.append(new_score)
+            new_score = self.minmax_score(temp_board, self, self.opponent, depth=self.depth-1, alpha=-math.inf, beta=math.inf)
+            all_scores.append(new_score)
             # white maximizes
             if self.is_white:
                 if best_score is None or new_score > best_score:
@@ -69,9 +69,9 @@ class MinmaxAI(player.Player):
                     best_score = new_score
                     best_move = move
 
-        # print(best_score)
-        # for i in range(len(all_scores)):
-        #     print(all_scores[i], moves[i])
+        print(best_score)
+        for i in range(len(all_scores)):
+            print(all_scores[i], moves[i])
 
         return best_move
 
@@ -169,7 +169,6 @@ class MinmaxAI(player.Player):
         black_score = self.get_score(False, board, man_val, king_val)
 
         score = white_score - black_score
-        # return negative value if the current player is black (the minimizer)
         return score
 
     def get_score(self, is_white, board, man_val, king_val):

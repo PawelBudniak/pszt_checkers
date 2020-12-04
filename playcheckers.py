@@ -32,7 +32,7 @@ def get_player_from_args(is_white, opponent, args, start, stop):
             i += 1
         i += 1
     print(noab, nocache, nosort, depth)
-    return minmax.MinmaxAI(True, opponent, depth, noab, nocache, nosort)
+    return minmax.MinmaxAI(is_white, opponent, depth, noab, nocache, nosort)
 
 
 

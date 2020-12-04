@@ -13,7 +13,7 @@ class Board:
         self.board = [[None for i in range(self.BOARD_SIZE)]
                       for j in range(self.BOARD_SIZE)]
         # self.init_board()
-        self.debug = False
+        self.debug = True
         self.score = [self.PIECES_COUNT, self.PIECES_COUNT]
         self.white_queen_moves = 0
         self.black_queen_moves = 0
