@@ -3,6 +3,7 @@ import copy
 import math
 import player
 import json
+from helper import *
 
 
 def clear_cache():
@@ -28,6 +29,12 @@ class MinmaxAI(player.Player):
         else:
             self.cache = {}
 
+        self.turn = 0
+
+
+
+
+
     def load_cache(self):
         with open(self.CACHE_FILE, 'r') as fp:
             try:
@@ -50,13 +57,23 @@ class MinmaxAI(player.Player):
         best_move = None
         moves = board.available_full_moves(self)
         # print(moves)
-        # all_scores = []
+        #all_scores = []
         if not self.nosort:
-            moves.sort(key=len)
+           moves.sort(key=len, reverse=True)
+        if self.turn == 0 and self.is_white:
+            self.turn += 1
+            return [Point(5,0), Point(4,1)]
         for move in moves:
             temp_board = copy.deepcopy(board)
             temp_board.full_move(self, move)
+            # if move == [Point(4,1), Point(3,2)]:
+            #     print('suicide')
+            # if move == [Point(6,1), Point(5,0)]:
+            #     print('wybierz to')
+
             new_score = self.minmax_score(temp_board, self.opponent, self, depth=self.depth, alpha=-math.inf, beta=math.inf)
+            if move == [Point(4, 1), Point(3, 2)]:
+                print('suicide')
             # all_scores.append(new_score)
             # white maximizes
             if self.is_white:
@@ -69,23 +86,27 @@ class MinmaxAI(player.Player):
                     best_score = new_score
                     best_move = move
 
-        # print(best_score)
+        # print(f'Best score: {best_score}')
         # for i in range(len(all_scores)):
-        #     print(all_scores[i], moves[i])
+        #     print(f' Scores: {all_scores[i]}, Moves:  {moves[i]}')
+
+        self.turn += 1
+        if not best_move:
+            print('brak ruchow')
 
         return best_move
 
     def cache_and_return(self, board, current_player, score):
         if self.nocache:
             return score
-        self.cache[board.key(current_player)] = score
+        self.cache[board.key(current_player, self.turn)] = score
         return score
 
     def minmax_score(self, board, current_player, opponent, depth, alpha, beta):
 
         # white is the maximizer
         if not self.nocache:
-            board_key = board.key(current_player)
+            board_key = board.key(current_player, self.turn)
 
         if self.nocache or board_key not in self.cache:
             if board.white_won() is True:
@@ -108,20 +129,37 @@ class MinmaxAI(player.Player):
                     if not self.noab:
                         alpha = max(alpha, max_score)
                         if beta <= alpha:
-                            break
+                            return self.cache_and_return(board, current_player, beta)
                 return self.cache_and_return(board, current_player, max_score)
 
             else:
+               # best_board = board
                 min_score = math.inf
                 for move in board.available_full_moves(current_player):
                     temp_board = copy.deepcopy(board)
                     temp_board.full_move(current_player, move)
                     score = self.minmax_score(temp_board, opponent, current_player, depth - 1, alpha, beta)
                     min_score = min(score, min_score)
+
+                    #debug
+                    if score < min_score:
+                        min_score = score
+                       # best_board = temp_board
+
+
+
                     if not self.noab:
                         beta = min(beta, min_score)
                         if beta <= alpha:
-                            break
+                            # print("=================\n"
+                            #       f"Hello I'm black and i pick this a-b, depth = {depth}\n"
+                            #       f"{self.heuristic(temp_board, None, None)}")
+                            # temp_board.display()
+                            return self.cache_and_return(board, current_player, alpha)
+                # print("=================\n"
+                #       f"Hello I'm black and i pick this normalnie, depth = {depth}\n"
+                #       f"{min_score}")
+                # best_board.display()
                 return self.cache_and_return(board, current_player, min_score)
         else:
             return self.cache[board_key]

@@ -1,5 +1,6 @@
 from checkers import *
 from helper import *
+import itertools
 
 
 class Move:
@@ -143,7 +144,6 @@ class Piece:
 
         path = []
 
-        import itertools
         directions = itertools.product((-1, 1), repeat=2)
 
         for dy, dx in directions:
@@ -160,7 +160,6 @@ class Piece:
 
         path = []
 
-        import itertools
         directions = itertools.product((-1, 1), repeat=2)
 
         for dy, dx in directions:

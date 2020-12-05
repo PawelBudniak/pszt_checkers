@@ -5,6 +5,7 @@ from piece import *
 from helper import *
 
 
+
 class Board:
     BOARD_SIZE = 8
     PIECES_COUNT = 12
@@ -19,7 +20,6 @@ class Board:
         self.black_queen_moves = 0
         self.white_player = None
         self.black_player = None
-        # self.turn = True
 
     def is_draw(self):
         return self.white_queen_moves >= 15 and self.black_queen_moves >= 15
@@ -33,15 +33,23 @@ class Board:
         else:
             return None
 
+    # def _possible_tiles(self):
+    #     start = 0
+    #     tiles = []
+    #     for y in range(self.BOARD_SIZE):
+    #         start = (start + 1) % 2
+    #         for x in range(start, self.BOARD_SIZE, 2):
+    #             tiles.append((y, x))
+    #     return tiles
+
     def count_pieces(self):
         self.score = [0, 0]
-        for y in range(self.BOARD_SIZE):
-            for x in range(self.BOARD_SIZE):
-                piece = self.board[y][x]
-                if piece is not None and piece.is_white:
-                    self.score[0] += 1
-                elif piece is not None and not piece.is_white:
-                    self.score[1] += 1
+        for y, x in BoardHelper.possible_tiles:
+            piece = self.board[y][x]
+            if piece is not None and piece.is_white:
+                self.score[0] += 1
+            elif piece is not None and not piece.is_white:
+                self.score[1] += 1
 
     def full_move(self, player, chosen_path):
 
@@ -93,7 +101,7 @@ class Board:
 
     def _should_capture(self, player):
         for piece in self.get_pieces(player):
-            if piece.available_moves(player,  self.board, must_capture=True):
+            if piece.available_moves(player, self.board, must_capture=True):
                 return True
         return False
 
@@ -129,7 +137,6 @@ class Board:
         if captured_piece:
             self.board[captured_piece.y][captured_piece.x] = None
 
-
     def _update_data(self, available_move, player):
 
         if available_move == Move.Capture:
@@ -142,19 +149,18 @@ class Board:
     def available_moves(self, player, capturing):
         moves = []
         for piece in self.get_pieces(player):
-
             # print("(" + str(piece.y) + " " + str(piece.x) + ") can move to: "
             #       + str(piece.available_moves(player, self.board, capturing)))
             piece_moves = piece.available_moves(player, self.board, capturing)
-            #if piece_moves:
+            # if piece_moves:
             moves.append(piece_moves)
         return moves
-
 
     # TODO redo this shit
     def available_full_moves(self, player):
         all_captures = []
         all_normal_moves = []
+        capture_count = 0
 
         for piece in player.get_pieces(self):
             start = Point(piece.y, piece.x)
@@ -164,17 +170,24 @@ class Board:
             # since we build the tree starting from the latest moves, we need to reverse it
             capture_tree = [list(reversed(alist)) for alist in capture_tree]
             all_captures.extend(capture_tree)
+            # for alist in capture_tree:
+            #     capture_count += 1
+            #     yield list(reversed(alist))
 
             normal_moves = piece.available_moves(player, self.board, False)
             normal_tree = [[start, move] for move in normal_moves]
             all_normal_moves.extend(normal_tree)
 
-        #  if captures available, one of them needs to be executed
+        # #  if captures available, one of them needs to be executed
         if all_captures:
             return all_captures
         # otherwise only non-capture moves are available
         else:
             return all_normal_moves
+        #
+        # if capture_count > 0:
+        #     for move in normal_moves:
+        #         yield move
 
     def capture_trees(self, player, point):
         captures = self.board[point.y][point.x].available_moves(player, self.board, must_capture=True)
@@ -224,11 +237,10 @@ class Board:
 
     def get_pieces(self, player):
         pieces = []
-        for row in self.board:
-            for cell in row:
-                tmp_piece = cell
-                if tmp_piece is not None and tmp_piece.is_white == player.is_white:
-                    pieces.append(tmp_piece)
+        for y, x in BoardHelper.possible_tiles:
+            piece = self.board[y][x]
+            if piece is not None and piece.is_white == player.is_white:
+                pieces.append(piece)
         return pieces
 
     def display(self):
@@ -260,9 +272,9 @@ class Board:
             print_horizontal_lines()
         print('')  # newline
 
-    def key(self, player):
+    def key(self, player, turn):
         whites_turn = player.is_white
-        key = str(whites_turn) + '\n'
+        key = str(whites_turn) + '\n' + str(turn)
         for col in self.board:
             for cell in col:
                 if cell is not None:
@@ -272,6 +284,9 @@ class Board:
             key += '\n'
         return key
 
+class BoardHelper:
+    possible_tiles = [(y,x) for y in range (Board.BOARD_SIZE)
+                       for x in range((y+1)% 2, Board.BOARD_SIZE, 2)]
 
 if __name__ == '__main__':
     brd = Board()
