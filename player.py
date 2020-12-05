@@ -15,5 +15,8 @@ class Player:
         print(result)
         return result
 
+    def keeps_cache(self):
+        return False
+
     def get_pieces(self, board):
         return board.get_pieces(self)
