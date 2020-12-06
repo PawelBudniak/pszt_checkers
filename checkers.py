@@ -176,7 +176,6 @@ class Board:
             all_captures.extend(capture_tree)
 
             normal_moves = piece.available_moves(player, self.board)
-            print("Hejka: " + str(normal_moves))
             normal_tree = [[start, move] for move in normal_moves]
             all_normal_moves.extend(normal_tree)
 
@@ -186,14 +185,12 @@ class Board:
 
         # otherwise only non-capture moves are available
         else:
-            # print(str(all_normal_moves))
             return all_normal_moves
 
 
     def capture_trees(self, player, point):
         captures = self.board[point.y][point.x].available_moves(player, self.board, must_capture=True)
         if not captures:
-            # print(str(point))
             return [[point]]
 
         board_copy = copy.deepcopy(self.board)

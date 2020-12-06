@@ -45,6 +45,9 @@ class MyTestCase(unittest.TestCase):
                 brd.full_move(brd.white_player, [Point(6, 1), Point(5, 0)])
                 brd.full_move(brd.black_player, [Point(2, 1), Point(3, 0)])
         self.assertTrue(brd.is_draw())
+
+    def lists_of_lists_equal(self, first, second):
+        self.assertEqual(set(map(tuple, first)), set(map(tuple, second)))
         
     def test_available_full_moves(self):
         brd = Board()
@@ -54,8 +57,9 @@ class MyTestCase(unittest.TestCase):
         brd.board[5][0] = Piece(5, 0, is_white=True, is_queen=False)
         brd.board[6][1] = Piece(4, 1, is_white=False, is_queen=False)
         correct_moves = [[Point(5,0), Point(7,2)]]
-        #self.assertEqual(correct_moves, brd.available_full_moves(white))
+        print(brd.available_full_moves(white))
         self.assertEqual(set(map(tuple,correct_moves)), set(map(tuple,brd.available_full_moves(white))))
+        #self.lists_of_lists_equal(correct_moves, brd.available_full_moves(white))
 
     def test_avaialble_moves(self):
         brd = Board()
@@ -74,6 +78,8 @@ class MyTestCase(unittest.TestCase):
         available_moves = brd.available_full_moves(white)
         print(str(available_moves))
         self.assertEqual(set(map(tuple,correct_moves)), set(map(tuple, brd.available_full_moves(white))))
+        #self.lists_of_lists_equal(correct_moves, brd.available_full_moves(white))
+
 
 
 

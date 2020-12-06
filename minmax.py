@@ -75,8 +75,6 @@ class MinmaxAI(player.Player):
 
             new_score = self.minmax_score(temp_board, self.opponent, self, depth=self.depth, alpha=-math.inf, beta=math.inf)
 
-            if move == [Point(4, 1), Point(3, 2)]:
-                print('suicide')
             # all_scores.append(new_score)
             # white maximizes
             if self.is_white:

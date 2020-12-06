@@ -129,7 +129,6 @@ class Piece:
             old_path = self.get_queen_path()
         else:
             old_path = self.get_man_path()
-        print(str(old_path))
         for el in old_path:
 
             possible_capture, captured_piece = self.try_move(el, current_player, board)
