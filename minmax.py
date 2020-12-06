@@ -56,10 +56,12 @@ class MinmaxAI(player.Player):
         best_score = None
         best_move = None
         moves = board.available_full_moves(self)
+        # print(str(moves))
         # print(moves)
         #all_scores = []
         if not self.nosort:
-           moves.sort(key=len, reverse=True)
+            moves.sort(key=len, reverse=True)
+            #print(str(moves))
         if self.turn == 0 and self.is_white:
             self.turn += 1
             return [Point(5,0), Point(4,1)]
@@ -72,6 +74,7 @@ class MinmaxAI(player.Player):
             #     print('wybierz to')
 
             new_score = self.minmax_score(temp_board, self.opponent, self, depth=self.depth, alpha=-math.inf, beta=math.inf)
+
             if move == [Point(4, 1), Point(3, 2)]:
                 print('suicide')
             # all_scores.append(new_score)

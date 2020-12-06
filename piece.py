@@ -129,13 +129,14 @@ class Piece:
             old_path = self.get_queen_path()
         else:
             old_path = self.get_man_path()
+        print(str(old_path))
         for el in old_path:
 
             possible_capture, captured_piece = self.try_move(el, current_player, board)
 
             if must_capture is True and possible_capture == Move.Capture \
                     or must_capture is None and possible_capture in (Move.Capture, Move.Traverse) \
-                        or must_capture is False and possible_capture == Move.Traverse:
+                    or must_capture is False and possible_capture == Move.Traverse:
                 path.append(el)
 
         return path

@@ -25,14 +25,13 @@ class Game:
         while running:
             if show_display:
                 self.brd.display()
+                print(f'scores = {self.brd.score}')
 
             t_start = perf_counter_ns()
 
             move = self.brd.white_player.get_move(self.brd)
             while not self.brd.full_move(self.brd.white_player, move):
                 move = self.brd.white_player.get_move(self.brd)
-                if show_display:
-                    self.brd.display()
 
             t_end = perf_counter_ns()
 
@@ -41,6 +40,8 @@ class Game:
 
             if self.brd.white_won() is not None or self.brd.is_draw() is True:
                 break
+
+            self.turn_count += 1
 
             if show_display:
                 self.brd.display()
@@ -51,21 +52,16 @@ class Game:
             move = self.brd.black_player.get_move(self.brd)
             while not self.brd.full_move(self.brd.black_player, move):
                 move = self.brd.black_player.get_move(self.brd)
-                if show_display:
-                    self.brd.display()
 
             t_end = perf_counter_ns()
+
             self.black_move_count += 1
             self.black_move_time += t_end - t_start
 
-            self.turn_count += 1
-
-            if show_display:
-                self.brd.display()
-                print(f'scores = {self.brd.score}')
-
             if self.brd.white_won() is not None or self.brd.is_draw() is True:
                 break
+
+            self.turn_count += 1
 
         game_end = perf_counter_ns()
 

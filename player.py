@@ -12,6 +12,8 @@ class Player:
         result = []
         for i in range(0, len(moves), 2):
             result.append(Point(moves[i], moves[i+1]))
+        if result[0] is None:
+            exit(1)
         print(result)
         return result
 
