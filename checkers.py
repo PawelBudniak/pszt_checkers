@@ -1,38 +1,36 @@
 from enum import Enum
 import copy
 from player import *
-from piece import *
+from piece import Piece, Move
 from helper import *
-
 
 
 class Board:
     BOARD_SIZE = 8
     PIECES_COUNT = 12
 
-    def __init__(self):
+    def __init__(self, white_player=None, black_player=None):
         self.board = [[None for i in range(self.BOARD_SIZE)]
                       for j in range(self.BOARD_SIZE)]
-        #self.init_board()
+        # self.init_board()
         self.debug = True
         self.score = [self.PIECES_COUNT, self.PIECES_COUNT]
         self.white_queen_moves = 0
         self.black_queen_moves = 0
-        self.white_player = None
-        self.black_player = None
+        self.white_player = white_player
+        self.black_player = black_player
 
     def is_draw(self):
         return self.white_queen_moves >= 15 and self.black_queen_moves >= 15
 
     def white_won(self):
-        #self.count_pieces()
+        # self.count_pieces()
         if self.score[1] == 0 or not self._can_move(self.black_player):
             return True
         elif self.score[0] == 0 or not self._can_move(self.white_player):
             return False
         else:
             return None
-
 
     def count_pieces(self):
         self.score = [0, 0]
@@ -88,7 +86,7 @@ class Board:
                 return False
 
             # if the piece is not capturing when path is longer than 2
-            if result is None and point != chosen_path[len(chosen_path)-1]:
+            if result is None and point != chosen_path[len(chosen_path) - 1]:
                 return False
 
             start_point = point
@@ -164,9 +162,10 @@ class Board:
     # TODO redo this shit
     def available_full_moves(self, player):
         all_captures = []
-        all_normal_moves = []
 
-        for piece in player.get_pieces(self):
+        pieces = player.get_pieces(self)
+
+        for piece in pieces:
             start = Point(piece.y, piece.x)
             capture_tree = self.capture_trees(player, Point(piece.y, piece.x))
             # remove the last element - it contains only the starting point
@@ -175,38 +174,40 @@ class Board:
             capture_tree = [list(reversed(alist)) for alist in capture_tree]
             all_captures.extend(capture_tree)
 
-            normal_moves = piece.available_moves(player, self.board)
-            normal_tree = [[start, move] for move in normal_moves]
-            all_normal_moves.extend(normal_tree)
-
-        # #  if captures available, one of them needs to be executed
+        # if captures available, one of them needs to be executed
         if all_captures:
             return all_captures
 
-        # otherwise only non-capture moves are available
-        else:
-            return all_normal_moves
+        all_normal_moves = []
 
+        # otherwise only non-capture moves are available
+        for piece in pieces:
+            start = Point(piece.y, piece.x)
+            normal_moves = piece.available_moves(player, self.board)
+            normal_tree = [[start, move] for move in normal_moves]
+            all_normal_moves.extend(normal_tree)
+        return all_normal_moves
 
     def capture_trees(self, player, point):
+
         captures = self.board[point.y][point.x].available_moves(player, self.board, must_capture=True)
+        # if there are no more captures left to combo, end recursion and return the last visited point
         if not captures:
             return [[point]]
 
-        board_copy = copy.deepcopy(self.board)
-        score_copy = copy.deepcopy(self.score)
+        original_board = self.board
+        score_copy = copy.copy(self.score)
         tree = []
 
         for capture in captures:
-            self.board = copy.deepcopy(board_copy)
-            if not self.move(player, point, capture):
-                print('nie move')
+            self.board = copy.deepcopy(original_board)
+            self.move(player, point, capture)
             child_tree = self.capture_trees(player, capture)
             for alist in child_tree:
                 alist.append(point)
-            tree.extend((child_tree))
+            tree.extend(child_tree)
 
-        self.board = board_copy
+        self.board = original_board
         tree.append([point])
         self.score = score_copy
         return tree
@@ -273,20 +274,30 @@ class Board:
 
     def key(self, player, turn):
         whites_turn = player.is_white
-        key = str(whites_turn) + '\n' + str(turn)
+        key = str(whites_turn) + str(turn)
         for col in self.board:
             for cell in col:
                 if cell is not None:
                     key += (str(cell))
                 else:
                     key += '-'
-            key += '\n'
+        return key
+
+    def simple_key(self, player):
+        whites_turn = player.is_white
+        key = str(whites_turn)
+        for col in self.board:
+            for cell in col:
+                if cell is not None:
+                    key += (str(cell))
+                else:
+                    key += '-'
         return key
 
 
 class BoardHelper:
-    possible_tiles = [(y,x) for y in range (Board.BOARD_SIZE)
-                       for x in range((y+1)% 2, Board.BOARD_SIZE, 2)]
+    possible_tiles = [(y, x) for y in range(Board.BOARD_SIZE)
+                      for x in range((y + 1) % 2, Board.BOARD_SIZE, 2)]
 
 
 if __name__ == '__main__':

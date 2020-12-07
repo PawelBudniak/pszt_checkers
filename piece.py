@@ -1,4 +1,3 @@
-from checkers import *
 from helper import *
 import itertools
 
