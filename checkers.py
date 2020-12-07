@@ -272,18 +272,7 @@ class Board:
             print_horizontal_lines()
         print('')  # newline
 
-    def key(self, player, turn):
-        whites_turn = player.is_white
-        key = str(whites_turn) + str(turn)
-        for col in self.board:
-            for cell in col:
-                if cell is not None:
-                    key += (str(cell))
-                else:
-                    key += '-'
-        return key
-
-    def simple_key(self, player):
+    def key(self, player):
         whites_turn = player.is_white
         key = str(whites_turn)
         for col in self.board:

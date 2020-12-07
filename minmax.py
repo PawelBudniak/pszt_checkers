@@ -4,20 +4,19 @@ import math
 import player
 import json
 from helper import *
+import pickle
 
 
 def clear_cache():
-    with open(MinmaxAI.CACHE_FILE, 'w') as fp:
-        json.dump({}, fp)
+    with open(MinmaxAI.CACHE_FILE, 'wb') as fp:
+        pickle.dump({}, fp)
 
 
 class MinmaxAI(player.Player):
-
-    CACHE_FILE = 'board_scores.json'
+    CACHE_FILE = 'board_scores.pickle'
     WIN_SCORE = math.inf
 
-
-    def __init__(self,is_white, opponent=None, depth=5, noab=False, nocache=False, nosort=False):
+    def __init__(self, is_white, opponent=None, depth=5, noab=False, nocache=False, nosort=False):
         super().__init__(is_white)
         self.opponent = opponent
         self.depth = depth
@@ -31,23 +30,13 @@ class MinmaxAI(player.Player):
 
         self.turn = 0
 
-
-
-
-
     def load_cache(self):
-        with open(self.CACHE_FILE, 'r') as fp:
-            try:
-                return json.load(fp)
-            # if file is empty cache is empty
-            except json.decoder.JSONDecodeError:
-                return {}
-
+        with open(self.CACHE_FILE, 'rb') as fp:
+            return pickle.load(fp)
 
     def save_cache(self):
-        with open(self.CACHE_FILE, 'w') as fp:
-            json.dump(self.cache, fp)
-
+        with open(self.CACHE_FILE, 'wb') as fp:
+            pickle.dump(self.cache, fp)
 
     def keeps_cache(self):
         return not self.nocache
@@ -58,13 +47,13 @@ class MinmaxAI(player.Player):
         moves = board.available_full_moves(self)
         # print(str(moves))
         # print(moves)
-        #all_scores = []
+        # all_scores = []
         if not self.nosort:
             moves.sort(key=len, reverse=True)
-            #print(str(moves))
+            # print(str(moves))
         if self.turn == 0 and self.is_white:
             self.turn += 1
-            return [Point(5,0), Point(4,1)]
+            return [Point(5, 0), Point(4, 1)]
         for move in moves:
             temp_board = copy.deepcopy(board)
             temp_board.full_move(self, move)
@@ -73,7 +62,8 @@ class MinmaxAI(player.Player):
             # if move == [Point(6,1), Point(5,0)]:
             #     print('wybierz to')
 
-            new_score = self.minmax_score(temp_board, self.opponent, self, depth=self.depth, alpha=-math.inf, beta=math.inf)
+            new_score = self.minmax_score(temp_board, self.opponent, self, depth=self.depth, alpha=-math.inf,
+                                          beta=math.inf)
 
             # all_scores.append(new_score)
             # white maximizes
@@ -97,73 +87,87 @@ class MinmaxAI(player.Player):
 
         return best_move
 
-    def cache_and_return(self, board, current_player, score):
+    def cache_and_return(self, board, current_player, score, depth, type):
         if self.nocache:
             return score
-        self.cache[board.key(current_player, self.turn)] = score
+        self.cache[board.key(current_player)] = CacheEntry(score, depth, type)
         return score
 
     def minmax_score(self, board, current_player, opponent, depth, alpha, beta):
 
         # white is the maximizer
         if not self.nocache:
-            board_key = board.key(current_player, self.turn)
+            board_key = board.key(current_player)
+            cache_entry = self.cache.get(board_key, None)
 
-        if self.nocache or board_key not in self.cache:
-            if board.white_won() is True:
-                return self.cache_and_return(board, current_player, self.WIN_SCORE)
-            elif board.white_won() is False:
-                return self.cache_and_return(board, current_player, -self.WIN_SCORE)
-            elif board.is_draw():
-                return self.cache_and_return(board, current_player, 0)
-            elif depth == 0:
-                h_score = self.heuristic(board, current_player, opponent)
-                return self.cache_and_return(board, current_player, h_score)
+        if (not self.nocache
+                and cache_entry is not None
+                and cache_entry.depth >= depth):
 
-            if current_player.is_white:
-                max_score = -math.inf
-                for move in board.available_full_moves(current_player):
-                    temp_board = copy.deepcopy(board)
-                    temp_board.full_move(current_player, move)
-                    score = self.minmax_score(temp_board, opponent, current_player, depth - 1, alpha, beta)
-                    max_score = max(score, max_score)
-                    if not self.noab:
-                        alpha = max(alpha, max_score)
-                        if beta <= alpha:
-                            return self.cache_and_return(board, current_player, beta)
-                return self.cache_and_return(board, current_player, max_score)
+            # if the value wasn't estimated by alpha beta just return it
+            if cache_entry.type == EntryType.EXACT:
+                return cache_entry.value
 
-            else:
-               # best_board = board
-                min_score = math.inf
-                for move in board.available_full_moves(current_player):
-                    temp_board = copy.deepcopy(board)
-                    temp_board.full_move(current_player, move)
-                    score = self.minmax_score(temp_board, opponent, current_player, depth - 1, alpha, beta)
-                    min_score = min(score, min_score)
+            # if it was estimated, use the estimation to possibly adjust alpha or beta
+            elif cache_entry.type == EntryType.UPPERBOUND:
+                beta = min(beta, cache_entry.value)
+            elif cache_entry.type == EntryType.LOWERBOUND:
+                alpha = max(alpha, cache_entry.value)
 
-                    #debug
-                    if score < min_score:
-                        min_score = score
-                       # best_board = temp_board
+                if beta <= alpha:
+                    # bez cache na wiki?
+                    return cache_entry.value
 
+        if board.white_won() is True:
+            return self.cache_and_return(board, current_player, self.WIN_SCORE, depth, EntryType.EXACT)
+        elif board.white_won() is False:
+            return self.cache_and_return(board, current_player, -self.WIN_SCORE, depth, EntryType.EXACT)
+        elif board.is_draw():
+            return self.cache_and_return(board, current_player, 0, depth, EntryType.EXACT)
+        elif depth == 0:
+            h_score = self.heuristic(board, current_player, opponent)
+            return self.cache_and_return(board, current_player, h_score, depth, EntryType.EXACT)
 
+        if current_player.is_white:
+            max_score = -math.inf
+            for move in board.available_full_moves(current_player):
+                temp_board = copy.deepcopy(board)
+                temp_board.full_move(current_player, move)
+                score = self.minmax_score(temp_board, opponent, current_player, depth - 1, alpha, beta)
+                max_score = max(score, max_score)
+                if not self.noab:
+                    alpha = max(alpha, max_score)
+                    if beta <= alpha:
+                        return self.cache_and_return(board, current_player, max_score, depth, EntryType.LOWERBOUND)
+            return self.cache_and_return(board, current_player, max_score, depth, EntryType.EXACT)
 
-                    if not self.noab:
-                        beta = min(beta, min_score)
-                        if beta <= alpha:
-                            # print("=================\n"
-                            #       f"Hello I'm black and i pick this a-b, depth = {depth}\n"
-                            #       f"{self.heuristic(temp_board, None, None)}")
-                            # temp_board.display()
-                            return self.cache_and_return(board, current_player, alpha)
-                # print("=================\n"
-                #       f"Hello I'm black and i pick this normalnie, depth = {depth}\n"
-                #       f"{min_score}")
-                # best_board.display()
-                return self.cache_and_return(board, current_player, min_score)
         else:
-            return self.cache[board_key]
+            # best_board = board
+            min_score = math.inf
+            for move in board.available_full_moves(current_player):
+                temp_board = copy.deepcopy(board)
+                temp_board.full_move(current_player, move)
+                score = self.minmax_score(temp_board, opponent, current_player, depth - 1, alpha, beta)
+                min_score = min(score, min_score)
+
+                # debug
+                if score < min_score:
+                    min_score = score
+                # best_board = temp_board
+
+                if not self.noab:
+                    beta = min(beta, min_score)
+                    if beta <= alpha:
+                        # print("=================\n"
+                        #       f"Hello I'm black and i pick this a-b, depth = {depth}\n"
+                        #       f"{self.heuristic(temp_board, None, None)}")
+                        # temp_board.display()
+                        return self.cache_and_return(board, current_player, alpha, depth, EntryType.UPPERBOUND)
+            # print("=================\n"
+            #       f"Hello I'm black and i pick this normalnie, depth = {depth}\n"
+            #       f"{min_score}")
+            # best_board.display()
+            return self.cache_and_return(board, current_player, min_score, depth, EntryType.EXACT)
 
     # def minmax_score(self, board, current_player, opponent, depth, alpha, beta):
     #
@@ -202,7 +206,6 @@ class MinmaxAI(player.Player):
     #     else:
     #         return self.cache[board_key]
 
-
     def heuristic(self, board, current_player, opponent, man_val=1, king_val=5):
         white_score = self.get_score(True, board, man_val, king_val)
         black_score = self.get_score(False, board, man_val, king_val)
@@ -224,7 +227,21 @@ class MinmaxAI(player.Player):
                 score += man_val
         return score
 
-        # player_val = sum(values[piece] for piece in player.get_pieces())
+
+class CacheEntry:
+
+    def __init__(self, value, depth, type):
+        self.value = value
+        self.depth = depth
+        self.type = type
+
+
+class EntryType:
+    EXACT = 0
+    LOWERBOUND = -1
+    UPPERBOUND = 1
+
+    # player_val = sum(values[piece] for piece in player.get_pieces())
 
 # class TestMinimaxAI(MinmaxAI):
 #
