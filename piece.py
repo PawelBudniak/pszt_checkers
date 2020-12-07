@@ -78,7 +78,7 @@ class Piece:
                     # came over opponents piece
                     else:
                         captured_pieces += 1
-                        captured_piece = Point(y, x)
+                        captured_piece = piece
                         possible_action = Move.Capture
 
         elif not self.is_queen:
@@ -96,7 +96,7 @@ class Piece:
                 if piece is not None:
                     if piece.is_white != self.is_white:
                         possible_action = Move.Capture
-                        captured_piece = Point(piece.y, piece.x)
+                        captured_piece = piece
 
         return possible_action, captured_piece
 

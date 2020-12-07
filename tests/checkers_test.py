@@ -61,11 +61,11 @@ class MyTestCase(unittest.TestCase):
     def test_available_full_moves_state(self):
         self.brd.board[5][0] = Piece(5, 0, is_white=True, is_queen=False)
         self.brd.board[6][1] = Piece(6, 1, is_white=False, is_queen=False)
-        board_key = self.brd.simple_key(self.white_player)
+        board_key = self.brd.key(self.white_player)
         score_copy = copy.copy(self.brd.score)
         moves = self.brd.available_full_moves(self.white_player)
 
-        self.assertEqual(board_key, self.brd.simple_key(self.white_player),
+        self.assertEqual(board_key, self.brd.key(self.white_player),
                          msg='Board.full_available_moves() changes board state')
         self.assertCountEqual(score_copy, self.brd.score,
                          msg='Board.full_available_moves() changes score state')

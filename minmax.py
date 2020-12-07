@@ -240,6 +240,8 @@ class EntryType:
     EXACT = 0
     LOWERBOUND = -1
     UPPERBOUND = 1
+    TERMINAL = 2
+    HEURISTIC = 3
 
     # player_val = sum(values[piece] for piece in player.get_pieces())
 

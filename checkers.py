@@ -113,7 +113,7 @@ class Board:
 
         if available_move is not None:
             self._execute_move(available_move, player, start, to, captured_piece)
-            return True  # successful action
+            return True, captured_piece  # successful action
 
     def try_move(self, player, start, to):
         from_piece = self.board[start.y][start.x]
@@ -188,27 +188,36 @@ class Board:
             all_normal_moves.extend(normal_tree)
         return all_normal_moves
 
-    def capture_trees(self, player, point):
+    def capture_trees(self, player, start):
 
-        captures = self.board[point.y][point.x].available_moves(player, self.board, must_capture=True)
+        captures = self.board[start.y][start.x].available_moves(player, self.board, must_capture=True)
         # if there are no more captures left to combo, end recursion and return the last visited point
         if not captures:
-            return [[point]]
+            return [[start]]
 
-        original_board = self.board
+       # original_board = self.board
         score_copy = copy.copy(self.score)
         tree = []
 
         for capture in captures:
-            self.board = copy.deepcopy(original_board)
-            self.move(player, point, capture)
+            # save board state before move
+            original = self.board[start.y][start.x]
+            capturing_piece = Piece(original.y, original.x, original.is_white, original.is_queen)
+            result, captured_piece = self.move(player, start, capture)
+
             child_tree = self.capture_trees(player, capture)
             for alist in child_tree:
-                alist.append(point)
+                alist.append(start)
             tree.extend(child_tree)
 
-        self.board = original_board
-        tree.append([point])
+            # restore board state after move
+            self.board[start.y][start.x] = capturing_piece
+            self.board[captured_piece.y][captured_piece.x] = captured_piece
+            self.board[capture.y][capture.x] = None
+
+
+        #self.board = original_board
+        tree.append([start])
         self.score = score_copy
         return tree
 
