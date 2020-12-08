@@ -1,46 +1,37 @@
 from enum import Enum
 import copy
 from player import *
-from piece import *
+from piece import Piece, Move
 from helper import *
-
+from minmax import *
 
 
 class Board:
     BOARD_SIZE = 8
     PIECES_COUNT = 12
 
-    def __init__(self):
+    def __init__(self, white_player=None, black_player=None):
         self.board = [[None for i in range(self.BOARD_SIZE)]
                       for j in range(self.BOARD_SIZE)]
-        self.init_board()
+        # self.init_board()
         self.debug = True
         self.score = [self.PIECES_COUNT, self.PIECES_COUNT]
         self.white_queen_moves = 0
         self.black_queen_moves = 0
-        self.white_player = None
-        self.black_player = None
+        self.white_player = white_player
+        self.black_player = black_player
 
     def is_draw(self):
         return self.white_queen_moves >= 15 and self.black_queen_moves >= 15
 
     def white_won(self):
-        self.count_pieces()
+        # self.count_pieces()
         if self.score[1] == 0 or not self._can_move(self.black_player):
             return True
         elif self.score[0] == 0 or not self._can_move(self.white_player):
             return False
         else:
             return None
-
-    # def _possible_tiles(self):
-    #     start = 0
-    #     tiles = []
-    #     for y in range(self.BOARD_SIZE):
-    #         start = (start + 1) % 2
-    #         for x in range(start, self.BOARD_SIZE, 2):
-    #             tiles.append((y, x))
-    #     return tiles
 
     def count_pieces(self):
         self.score = [0, 0]
@@ -52,51 +43,68 @@ class Board:
                 self.score[1] += 1
 
     def full_move(self, player, chosen_path):
+        if not chosen_path:
+            print('chosen_path')
+            return False, None
 
-        board = copy.deepcopy(self.board)
-        begin_score = self.score
-        if chosen_path is None:
-            print(f'white won: {self.white_won()}')
-            return False
-        processing = True
-        chosen_path = copy.deepcopy(chosen_path)
-        move_from = chosen_path.pop(0)
-        move_to = chosen_path.pop(0)
+        if not isinstance(player, MinmaxAI):
+            if self.try_full_move(player, chosen_path) is False:
+                print('try full')
+                return False, None
 
-        should_capture = self._should_capture(player)
+        begin_score = copy.deepcopy(self.score)
+        move_from = chosen_path[0]
+        captured_pieces = []
 
-        while processing:
+        for move_to in chosen_path[1:]:
 
-            prev_score = self.score.copy()
-
-            if not self.move(player, move_from, move_to):
-                self.board = board
-                return False
-
-            if prev_score == self.score and should_capture:
-                self.board = board
-                print("Player required to capture, wrong move")
-                return False
-
-            # player can move multiple times only when capturing
-            if prev_score == self.score and chosen_path:
-                print("Too many move choices, wrong move")
-                self.board = board
-                return False
-            should_capture = False
-
-            if not chosen_path:
-                break
+            result, captured_piece =  self.move(player, move_from, move_to)
+            if not result:
+                print("absolute disgrace!@@@@@@@@@@@@@@@@")
+                return False, captured_pieces
             move_from = move_to
-            move_to = chosen_path.pop(0)
+            if captured_piece is not None:
+                captured_pieces.append(captured_piece)
 
         if self.score == begin_score and self.board[move_to.y][move_to.x].is_queen:
             if self.board[move_to.y][move_to.x].is_white:
                 self.white_queen_moves += 1
-
             else:
                 self.black_queen_moves += 1
+        return True, captured_pieces
 
+    def try_full_move(self, player, chosen_path):
+        if not chosen_path:
+            return False
+
+        should_capture = self._should_capture(player)
+        # print(str(should_capture))
+        start_point = chosen_path[0]
+
+        begin_state = copy.deepcopy(self)
+
+        for point in chosen_path[1:]:
+            result = self.try_move(player, start_point, point)
+            # print(str(result))
+
+            # if the piece should capture but it doesnt
+            if len(chosen_path) == 2 and should_capture and result is False:
+                # print("1. " + str(start_point) + "2. " + str(point))
+                self = begin_state
+                return False
+
+            # if the piece is trying to traverse when moving more than one time
+            if len(chosen_path) != 2 and result is False:
+                self = begin_state
+                return False
+
+            # if the piece is not capturing when path is longer than 2
+            if result is None and point != chosen_path[len(chosen_path) - 1]:
+                self = begin_state
+                return False
+            self.move(player, start_point, point)
+            start_point = point
+        self = begin_state
         return True
 
     def _should_capture(self, player):
@@ -115,20 +123,24 @@ class Board:
     def move(self, player, start, to):
 
         from_piece = self.board[start.y][start.x]
-        if not from_piece:
-            return False
         available_move, captured_piece = from_piece.try_move(to, player, self.board)
-        """
-        Now we need to check if a piece was captured, udpate the score etc.
-        """
-        if available_move == Move.Unavailable:
-            return False
-        self._execute_move(start, to, captured_piece)
-        self._update_data(available_move, player)
-        self._try_king(player, to)
-        return True  # successful action
 
-    def _execute_move(self, start, to, captured_piece):
+        if available_move is not None:
+            self._execute_move(available_move, player, start, to, captured_piece)
+            return True, captured_piece  # successful action
+
+    def try_move(self, player, start, to):
+        from_piece = self.board[start.y][start.x]
+        if not from_piece:
+            return None
+        available_move, captured_piece = from_piece.try_move(to, player, self.board)
+        if available_move == Move.Unavailable:
+            return None
+        if available_move == Move.Traverse:
+            return False
+        return True
+
+    def _execute_move(self, available_move, player, start, to, captured_piece):
         self.board[to.y][to.x] = self.board[start.y][start.x]
         self.board[start.y][start.x] = None
         piece = self.board[to.y][to.x]
@@ -136,6 +148,13 @@ class Board:
         piece.x = to.x
         if captured_piece:
             self.board[captured_piece.y][captured_piece.x] = None
+        self._update_data(available_move, player)
+        self._try_king(player, to)
+        if available_move == Move.Capture:
+            if player.is_white:
+                self.score[1] -= 1
+            else:
+                self.score[0] -= 1
 
     def _update_data(self, available_move, player):
 
@@ -144,25 +163,23 @@ class Board:
                 self.white_queen_moves = 0
             else:
                 self.black_queen_moves = 0
-            self.count_pieces()
+            # self.count_pieces()
 
     def available_moves(self, player, capturing):
         moves = []
         for piece in self.get_pieces(player):
-            # print("(" + str(piece.y) + " " + str(piece.x) + ") can move to: "
-            #       + str(piece.available_moves(player, self.board, capturing)))
             piece_moves = piece.available_moves(player, self.board, capturing)
-            # if piece_moves:
             moves.append(piece_moves)
+        moves.sort(key=len, reverse=True)
         return moves
 
     # TODO redo this shit
     def available_full_moves(self, player):
         all_captures = []
-        all_normal_moves = []
-        capture_count = 0
 
-        for piece in player.get_pieces(self):
+        pieces = player.get_pieces(self)
+
+        for piece in pieces:
             start = Point(piece.y, piece.x)
             capture_tree = self.capture_trees(player, Point(piece.y, piece.x))
             # remove the last element - it contains only the starting point
@@ -170,47 +187,60 @@ class Board:
             # since we build the tree starting from the latest moves, we need to reverse it
             capture_tree = [list(reversed(alist)) for alist in capture_tree]
             all_captures.extend(capture_tree)
-            # for alist in capture_tree:
-            #     capture_count += 1
-            #     yield list(reversed(alist))
 
-            normal_moves = piece.available_moves(player, self.board, False)
-            normal_tree = [[start, move] for move in normal_moves]
-            all_normal_moves.extend(normal_tree)
-
-        # #  if captures available, one of them needs to be executed
+        # if captures available, one of them needs to be executed
         if all_captures:
             return all_captures
+
+        all_normal_moves = []
+
         # otherwise only non-capture moves are available
-        else:
-            return all_normal_moves
-        #
-        # if capture_count > 0:
-        #     for move in normal_moves:
-        #         yield move
+        for piece in pieces:
+            start = Point(piece.y, piece.x)
+            normal_moves = piece.available_moves(player, self.board)
+            normal_tree = [[start, move] for move in normal_moves]
+            all_normal_moves.extend(normal_tree)
+        return all_normal_moves
 
-    def capture_trees(self, player, point):
-        captures = self.board[point.y][point.x].available_moves(player, self.board, must_capture=True)
+    def capture_trees(self, player, start):
+
+        captures = self.board[start.y][start.x].available_moves(player, self.board, must_capture=True)
+        # if there are no more captures left to combo, end recursion and return the last visited point
         if not captures:
-            return [[point]]
+            return [[start]]
 
-        board_copy = copy.deepcopy(self.board)
-        score_copy = copy.deepcopy(self.score)
+       # original_board = self.board
+        score_copy = copy.copy(self.score)
         tree = []
 
         for capture in captures:
-            self.board = copy.deepcopy(board_copy)
-            if not self.move(player, point, capture):
-                print('nie move')
+            # save board state before move
+            original = self.board[start.y][start.x]
+            capturing_piece = Piece(original.y, original.x, original.is_white, original.is_queen)
+            result, captured_piece = self.move(player, start, capture)
+
             child_tree = self.capture_trees(player, capture)
             for alist in child_tree:
-                alist.append(point)
-            tree.extend((child_tree))
+                alist.append(start)
+            tree.extend(child_tree)
 
-        self.board = board_copy
-        tree.append([point])
+            # restore board state after move
+            self.undo_capture(capturing_piece, captured_piece, capture)
+            # self.board[start.y][start.x] = capturing_piece
+            # self.board[captured_piece.y][captured_piece.x] = captured_piece
+            # self.board[capture.y][capture.x] = None
+
+
+        #self.board = original_board
+        tree.append([start])
         self.score = score_copy
         return tree
+
+
+    def undo_capture(self, capturing, captured, destination):
+        self.board[capturing.y][capturing.x] = capturing
+        self.board[captured.y][captured.x] = captured
+        self.board[destination.y][destination.x] = None
 
     def init_board(self):
         def fill_row(row, start, is_white):
@@ -272,21 +302,22 @@ class Board:
             print_horizontal_lines()
         print('')  # newline
 
-    def key(self, player, turn):
+    def key(self, player):
         whites_turn = player.is_white
-        key = str(whites_turn) + '\n' + str(turn)
+        key = str(whites_turn)
         for col in self.board:
             for cell in col:
                 if cell is not None:
                     key += (str(cell))
                 else:
                     key += '-'
-            key += '\n'
         return key
 
+
 class BoardHelper:
-    possible_tiles = [(y,x) for y in range (Board.BOARD_SIZE)
-                       for x in range((y+1)% 2, Board.BOARD_SIZE, 2)]
+    possible_tiles = [(y, x) for y in range(Board.BOARD_SIZE)
+                      for x in range((y + 1) % 2, Board.BOARD_SIZE, 2)]
+
 
 if __name__ == '__main__':
     brd = Board()
