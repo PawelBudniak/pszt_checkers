@@ -58,7 +58,7 @@ class Board:
 
         for move_to in chosen_path[1:]:
 
-            result, captured_piece =  self.move(player, move_from, move_to)
+            result, captured_piece = self.move(player, move_from, move_to)
             if not result:
                 print("absolute disgrace!@@@@@@@@@@@@@@@@")
                 return False, captured_pieces
@@ -240,7 +240,8 @@ class Board:
     def undo_capture(self, capturing, captured, destination):
         self.board[capturing.y][capturing.x] = capturing
         self.board[captured.y][captured.x] = captured
-        self.board[destination.y][destination.x] = None
+        if destination != capturing.to_point():
+            self.board[destination.y][destination.x] = None
 
     def init_board(self):
         def fill_row(row, start, is_white):

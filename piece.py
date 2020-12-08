@@ -17,12 +17,6 @@ class Piece:
         self.y = y
         self.x = x
 
-    # def __str__(self) -> str:
-    #     return f'is_white = {self.is_white} \n' \
-    #            f'is_queen = {self.is_queen} \n' \
-    #            f'y = {self.y} \n' \
-    #            f'x = {self.x} \n'
-
     def __str__(self):
         if self.is_white:
             char = 'w'
@@ -30,14 +24,12 @@ class Piece:
             char = 'b'
         if self.is_queen:
             char = char.upper()
-        ### DEBUG
-        char += str(self.y) + str(self.x)
         return char
 
 
 
     def __eq__(self, other):
-        if not isinstance(other, Point):
+        if not isinstance(other, Piece):
             return False
         return (self.is_white == other.is_white and
                 self.is_queen == other.is_queen and
