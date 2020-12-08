@@ -43,26 +43,33 @@ class Board:
 
     def full_move(self, player, chosen_path):
         if not chosen_path:
-            return False
+            print('chosen_path')
+            return False, None
 
         if self.try_full_move(player, chosen_path) is False:
-            return False
+            print('try full')
+            return False, None
 
         begin_score = copy.deepcopy(self.score)
         move_from = chosen_path[0]
+        captured_pieces = []
+
         for move_to in chosen_path[1:]:
 
-            if not self.move(player, move_from, move_to):
-                print("absolute disgrace!")
-                return False
+            result, captured_piece =  self.move(player, move_from, move_to)
+            if not result:
+                print("absolute disgrace!@@@@@@@@@@@@@@@@")
+                return False, captured_pieces
             move_from = move_to
+            if captured_piece is not None:
+                captured_pieces.append(captured_piece)
 
         if self.score == begin_score and self.board[move_to.y][move_to.x].is_queen:
             if self.board[move_to.y][move_to.x].is_white:
                 self.white_queen_moves += 1
             else:
                 self.black_queen_moves += 1
-        return True
+        return True, captured_pieces
 
     def try_full_move(self, player, chosen_path):
         if not chosen_path:
@@ -211,15 +218,22 @@ class Board:
             tree.extend(child_tree)
 
             # restore board state after move
-            self.board[start.y][start.x] = capturing_piece
-            self.board[captured_piece.y][captured_piece.x] = captured_piece
-            self.board[capture.y][capture.x] = None
+            self.undo_capture(capturing_piece, captured_piece, capture)
+            # self.board[start.y][start.x] = capturing_piece
+            # self.board[captured_piece.y][captured_piece.x] = captured_piece
+            # self.board[capture.y][capture.x] = None
 
 
         #self.board = original_board
         tree.append([start])
         self.score = score_copy
         return tree
+
+
+    def undo_capture(self, capturing, captured, destination):
+        self.board[capturing.y][capturing.x] = capturing
+        self.board[captured.y][captured.x] = captured
+        self.board[destination.y][destination.x] = None
 
     def init_board(self):
         def fill_row(row, start, is_white):

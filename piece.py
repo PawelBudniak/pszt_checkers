@@ -9,7 +9,6 @@ class Move:
 
 
 class Piece:
-
     BOARD_SIZE = 8
 
     def __init__(self, y, x, is_white, is_queen=False):
@@ -18,6 +17,12 @@ class Piece:
         self.y = y
         self.x = x
 
+    # def __str__(self) -> str:
+    #     return f'is_white = {self.is_white} \n' \
+    #            f'is_queen = {self.is_queen} \n' \
+    #            f'y = {self.y} \n' \
+    #            f'x = {self.x} \n'
+
     def __str__(self):
         if self.is_white:
             char = 'w'
@@ -25,7 +30,20 @@ class Piece:
             char = 'b'
         if self.is_queen:
             char = char.upper()
+        ### DEBUG
+        char += str(self.y) + str(self.x)
         return char
+
+
+
+    def __eq__(self, other):
+        if not isinstance(other, Point):
+            return False
+        return (self.is_white == other.is_white and
+                self.is_queen == other.is_queen and
+                self.y == other.y and
+                self.x == other.x
+                )
 
     def to_point(self):
         return Point(self.y, self.x)
@@ -100,7 +118,7 @@ class Piece:
 
         return possible_action, captured_piece
 
-    def check_constraints(self,  to, current_player, board):
+    def check_constraints(self, to, current_player, board):
 
         # case: destined coordinates out of board bounds
         if to.y not in range(self.BOARD_SIZE) or to.x not in range(self.BOARD_SIZE) or \
@@ -163,7 +181,7 @@ class Piece:
 
         for dy, dx in directions:
             for i in (1, 2):
-                y, x = self.y + i*dy, self.x + i*dx
+                y, x = self.y + i * dy, self.x + i * dx
                 if 0 <= y and 0 <= x < self.BOARD_SIZE:
                     path.append(Point(y, x))
 

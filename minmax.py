@@ -5,6 +5,7 @@ import player
 import json
 from helper import *
 import pickle
+from piece import Piece
 
 
 def clear_cache():
@@ -31,8 +32,11 @@ class MinmaxAI(player.Player):
         self.turn = 0
 
     def load_cache(self):
-        with open(self.CACHE_FILE, 'rb') as fp:
-            return pickle.load(fp)
+        try:
+            with open(self.CACHE_FILE, 'rb') as fp:
+                return pickle.load(fp)
+        except FileNotFoundError:
+            return {}
 
     def save_cache(self):
         with open(self.CACHE_FILE, 'wb') as fp:
@@ -55,15 +59,30 @@ class MinmaxAI(player.Player):
             self.turn += 1
             return [Point(5, 0), Point(4, 1)]
         for move in moves:
-            temp_board = copy.deepcopy(board)
-            temp_board.full_move(self, move)
+            # temp_board = copy.deepcopy(board)
+            # temp_board.full_move(self, move)
             # if move == [Point(4,1), Point(3,2)]:
             #     print('suicide')
             # if move == [Point(6,1), Point(5,0)]:
             #     print('wybierz to')
 
-            new_score = self.minmax_score(temp_board, self.opponent, self, depth=self.depth, alpha=-math.inf,
+            score_copy = copy.copy(board.score)
+            w_queen_moves, b_queen_moves = board.white_queen_moves, board.black_queen_moves
+            start = board.board[move[0].y][move[0].x]
+            starting_piece = Piece(start.y, start.x, start.is_white, start.is_queen)
+            result, captured_pieces = board.full_move(self, move)
+
+            new_score = self.minmax_score(board, self.opponent, self, depth=self.depth, alpha=-math.inf,
                                           beta=math.inf)
+
+            board.board[starting_piece.y][starting_piece.x] = starting_piece
+            board.board[move[-1].y][move[-1].x] = None
+            if captured_pieces:
+                for piece in captured_pieces:
+                    board.board[piece.y][piece.x] = piece
+            board.score = score_copy
+            board.white_queen_moves = w_queen_moves
+            board.black_queen_moves = b_queen_moves
 
             # all_scores.append(new_score)
             # white maximizes
@@ -131,42 +150,75 @@ class MinmaxAI(player.Player):
         if current_player.is_white:
             max_score = -math.inf
             for move in board.available_full_moves(current_player):
-                temp_board = copy.deepcopy(board)
-                temp_board.full_move(current_player, move)
-                score = self.minmax_score(temp_board, opponent, current_player, depth - 1, alpha, beta)
+                # temp_board = copy.deepcopy(board)
+                # temp_board.full_move(current_player, move)
+                if len(move) > 2:
+                    print(move[0].y, move[0].x)
+                    print(move[-1].y, move[-1].x)
+
+                score_copy = copy.copy(board.score)
+                w_queen_moves, b_queen_moves = board.white_queen_moves, board.black_queen_moves
+                start = board.board[move[0].y][move[0].x]
+                starting_piece = Piece(start.y, start.x, start.is_white, start.is_queen)
+                result, captured_pieces = board.full_move(current_player, move)
+
+                if result == False:
+                    print('ciekawe')
+
+                score = self.minmax_score(board, opponent, current_player, depth - 1, alpha, beta)
                 max_score = max(score, max_score)
+
+                board.board[starting_piece.y][starting_piece.x] = starting_piece
+                board.board[move[-1].y][move[-1].x] = None
+                if captured_pieces:
+                    for piece in captured_pieces:
+                        board.board[piece.y][piece.x] = piece
+                board.score = score_copy
+                board.white_queen_moves = w_queen_moves
+                board.black_queen_moves = b_queen_moves
+
+
                 if not self.noab:
                     alpha = max(alpha, max_score)
                     if beta <= alpha:
                         return self.cache_and_return(board, current_player, max_score, depth, EntryType.LOWERBOUND)
+
             return self.cache_and_return(board, current_player, max_score, depth, EntryType.EXACT)
 
         else:
             # best_board = board
             min_score = math.inf
             for move in board.available_full_moves(current_player):
-                temp_board = copy.deepcopy(board)
-                temp_board.full_move(current_player, move)
-                score = self.minmax_score(temp_board, opponent, current_player, depth - 1, alpha, beta)
+                # temp_board = copy.deepcopy(board)
+                # temp_board.full_move(current_player, move)
+
+                score_copy = copy.copy(board.score)
+                w_queen_moves, b_queen_moves = board.white_queen_moves, board.black_queen_moves
+                start = board.board[move[0].y][move[0].x]
+                starting_piece = Piece(start.y, start.x, start.is_white, start.is_queen)
+                result, captured_pieces = board.full_move(current_player, move)
+
+                if result == False:
+                    print('ciekawe')
+
+                score = self.minmax_score(board, opponent, current_player, depth - 1, alpha, beta)
                 min_score = min(score, min_score)
 
-                # debug
-                if score < min_score:
-                    min_score = score
-                # best_board = temp_board
+                board.board[starting_piece.y][starting_piece.x] = starting_piece
+                board.board[move[-1].y][move[-1].x] = None
+                if captured_pieces:
+                    for piece in captured_pieces:
+                        board.board[piece.y][piece.x] = piece
+                board.score = score_copy
+                board.white_queen_moves = w_queen_moves
+                board.black_queen_moves = b_queen_moves
+
 
                 if not self.noab:
                     beta = min(beta, min_score)
                     if beta <= alpha:
-                        # print("=================\n"
-                        #       f"Hello I'm black and i pick this a-b, depth = {depth}\n"
-                        #       f"{self.heuristic(temp_board, None, None)}")
-                        # temp_board.display()
                         return self.cache_and_return(board, current_player, alpha, depth, EntryType.UPPERBOUND)
-            # print("=================\n"
-            #       f"Hello I'm black and i pick this normalnie, depth = {depth}\n"
-            #       f"{min_score}")
-            # best_board.display()
+
             return self.cache_and_return(board, current_player, min_score, depth, EntryType.EXACT)
 
     # def minmax_score(self, board, current_player, opponent, depth, alpha, beta):

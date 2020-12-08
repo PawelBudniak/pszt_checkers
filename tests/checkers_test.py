@@ -89,12 +89,19 @@ class MyTestCase(unittest.TestCase):
         self.brd.board[6][1] = Piece(6, 1, is_white=True, is_queen=False)
         self.brd.board[4][5] = Piece(4, 5, is_white=True, is_queen=True)
         moves = self.brd.available_full_moves(self.black_player)
+        board_key = self.brd.key(self.black_player)
+        score_copy = copy.copy(self.brd.score)
+
 
 
         self.assertIn([Point(5, 0), Point(7, 2)], moves)
         self.assertIn([Point(5, 0), Point(7, 2), Point(3, 6)], moves)
         self.assertIn([Point(5, 0), Point(7, 2), Point(2, 7)], moves)
         self.assertNotIn([Point(5, 0), Point(7, 2), Point(4, 5)], moves)
+        self.assertEqual(board_key, self.brd.key(self.black_player),
+                         msg='Board.full_available_moves() changes board state')
+        self.assertCountEqual(score_copy, self.brd.score,
+                              msg='Board.full_available_moves() changes score state')
 
 if __name__ == '__main__':
     unittest.main()
