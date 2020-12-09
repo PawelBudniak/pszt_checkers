@@ -127,6 +127,8 @@ class MinmaxAI(player.Player):
             max_score = -math.inf
 
             moves = board.available_full_moves(current_player)
+            if not self.nosort:
+                moves.sort(key=len, reverse=True)
             for move in moves:
 
                 # save board state before move
@@ -152,6 +154,8 @@ class MinmaxAI(player.Player):
         else:
             min_score = math.inf
             moves = board.available_full_moves(current_player)
+            if not self.nosort:
+                moves.sort(key=len, reverse=True)
             for move in moves:
 
                 # save board state before move
