@@ -25,7 +25,6 @@ class MyTestCase(unittest.TestCase):
         self.brd.black_player = Player(is_white=False)
         self.brd.display()
         self.brd.count_pieces()
-        print(str(self.brd.available_moves(self.brd.white_player, capturing=None)))
         self.assertFalse(self.brd._can_move(self.brd.white_player))
 
     def test_should_catpture(self):
@@ -79,9 +78,7 @@ class MyTestCase(unittest.TestCase):
         self.brd.board[6][1] = Piece(6, 1, is_white=True, is_queen=False)
         correct_moves = [[Point(6, 1), Point(5, 0)], [Point(6, 1), Point(5, 2)]]
         available_moves = self.brd.available_full_moves(self.white_player)
-        print(str(available_moves))
-        #self.lists_of_lists_equal(correct_moves, self.brd.available_full_moves(self.white_player))
-        self.assertCountEqual(correct_moves, self.brd.available_full_moves(self.white_player))
+        self.assertCountEqual(correct_moves, available_moves)
 
     def test_available_full_moves_queen(self):
         self.brd.board[5][0] = Piece(5, 0, is_white=False, is_queen=False)
@@ -134,16 +131,6 @@ class MyTestCase(unittest.TestCase):
         self.brd.board[5][4] = Piece(5, 2, is_white=False, is_queen=False)  # to 4, 3
         self.brd.board[3][2] = Piece(3, 2, is_white=False, is_queen=False)  # to 2, 1
         self.assertFalse(self.brd.full_move(self.white_player, [Point(1,0), Point(6,5)])[0])
-
-    # TODO:
-    def test_undo_capture(self):
-        self.brd.board[7][0] = Piece(7, 0, is_white=True, is_queen=True)
-        self.brd.board[5][2] = Piece(5, 2, is_white=False, is_queen=False)  # to 4, 3
-        self.brd.board[5][4] = Piece(5, 4, is_white=False, is_queen=False)  # to 6, 5
-        self.brd.board[3][2] = Piece(3, 2, is_white=False, is_queen=False)  # to 2, 1
-        self.brd.board[1][2] = Piece(1, 2, is_white=False, is_queen=False)  # to 0, 3
-        path = [Point(7, 0), Point(4, 3), Point(6, 5), Point(2, 1), Point(0, 3)]
-        captured = self.brd.full_move(self.white_player, path)[1]
 
 
 if __name__ == '__main__':

@@ -136,9 +136,6 @@ class MinmaxAI(player.Player):
                 result, captured_pieces = board.full_move(current_player, move)
                 move_info.captured_pieces = captured_pieces
 
-                if result == False:
-                    print('ciekawe')
-
                 score = self.minmax_score(board, opponent, current_player, depth - 1, alpha, beta)
                 max_score = max(score, max_score)
 

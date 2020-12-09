@@ -32,7 +32,6 @@ class Board:
         return self.white_queen_moves >= 15 and self.black_queen_moves >= 15
 
     def white_won(self):
-        # self.count_pieces()
         if self.score[1] == 0 or not self._can_move(self.black_player):
             return True
         elif self.score[0] == 0 or not self._can_move(self.white_player):
@@ -86,18 +85,15 @@ class Board:
             return False
 
         should_capture = self._should_capture(player)
-        # print(str(should_capture))
         start_point = chosen_path[0]
 
         begin_state = copy.deepcopy(self)
 
         for point in chosen_path[1:]:
             result = self.try_move(player, start_point, point)
-            # print(str(result))
 
             # if the piece should capture but it doesnt
             if len(chosen_path) == 2 and should_capture and result is False:
-                # print("1. " + str(start_point) + "2. " + str(point))
                 self.set(begin_state)
                 return False
 
@@ -127,7 +123,6 @@ class Board:
                 return True
         return False
 
-    # TODO test
     def move(self, player, start, to):
 
         from_piece = self.board[start.y][start.x]
@@ -171,7 +166,6 @@ class Board:
                 self.white_queen_moves = 0
             else:
                 self.black_queen_moves = 0
-            # self.count_pieces()
 
     def available_moves(self, player, capturing):
         moves = []
@@ -181,14 +175,12 @@ class Board:
         moves.sort(key=len, reverse=True)
         return moves
 
-    # TODO redo this shit
     def available_full_moves(self, player):
         all_captures = []
 
         pieces = player.get_pieces(self)
 
         for piece in pieces:
-            start = Point(piece.y, piece.x)
             capture_tree = self.capture_trees(player, Point(piece.y, piece.x))
             # remove the last element - it contains only the starting point
             capture_tree.pop()

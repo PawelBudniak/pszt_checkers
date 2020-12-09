@@ -2,7 +2,6 @@ import minmax
 from player import *
 import game
 import sys
-import json
 
 
 DEFAULT_DEPTH = 5
@@ -31,7 +30,6 @@ def get_player_from_args(is_white, opponent, args, start, stop):
             depth = int(args[i + 1])
             i += 1
         i += 1
-    print(noab, nocache, nosort, depth)
     return minmax.MinmaxAI(is_white, opponent, depth, noab, nocache, nosort)
 
 
@@ -56,15 +54,13 @@ if __name__ == '__main__':
         minmax.clear_cache()
 
 
-    if '-test' in sys.argv:
+    if '-testing' in sys.argv:
         testing = True
 
     #  if p1 is AI we need to set his opponent
     if p1_start is not None:
         player1.opponent = player2
 
-    print(player1)
-    print(player2)
 
     game = game.Game(player1, player2)
     game.play(show_display=True, cache_white_player=player1.keeps_cache(), cache_black_player=player2.keeps_cache(), testing=testing)

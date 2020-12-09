@@ -10,10 +10,6 @@ import copy
 
 class MyTestCase(unittest.TestCase):
 
-        # def setUp(self):
-        #     self.white_player = Player(is_white=False)
-        #     self.minmax = MinmaxAI(is_white=False, depth = 5,)
-        #     self.brd = Board(self.white_player, self.minmax)
 
         def test_minmax_board_state(self):
             self.white_player = MinmaxAI(is_white=True)
