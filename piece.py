@@ -9,7 +9,6 @@ class Move:
 
 
 class Piece:
-
     BOARD_SIZE = 8
 
     def __init__(self, y, x, is_white, is_queen=False):
@@ -27,9 +26,21 @@ class Piece:
             char = char.upper()
         return char
 
+
+
+    def __eq__(self, other):
+        if not isinstance(other, Piece):
+            return False
+        return (self.is_white == other.is_white and
+                self.is_queen == other.is_queen and
+                self.y == other.y and
+                self.x == other.x
+                )
+
     def to_point(self):
         return Point(self.y, self.x)
 
+    #TODO : test
     def try_move(self, to, current_player, board):
         """
         :param
@@ -78,7 +89,7 @@ class Piece:
                     # came over opponents piece
                     else:
                         captured_pieces += 1
-                        captured_piece = Point(y, x)
+                        captured_piece = piece
                         possible_action = Move.Capture
 
         elif not self.is_queen:
@@ -96,11 +107,11 @@ class Piece:
                 if piece is not None:
                     if piece.is_white != self.is_white:
                         possible_action = Move.Capture
-                        captured_piece = Point(piece.y, piece.x)
+                        captured_piece = piece
 
         return possible_action, captured_piece
 
-    def check_constraints(self,  to, current_player, board):
+    def check_constraints(self, to, current_player, board):
 
         # case: destined coordinates out of board bounds
         if to.y not in range(self.BOARD_SIZE) or to.x not in range(self.BOARD_SIZE) or \
@@ -121,6 +132,7 @@ class Piece:
 
         return True
 
+    # TODO: test
     def available_moves(self, current_player, board, must_capture=None):
 
         path = []
@@ -139,6 +151,7 @@ class Piece:
 
         return path
 
+    # TODO: test
     def get_queen_path(self):
 
         path = []
@@ -155,6 +168,7 @@ class Piece:
                 x += dx
         return path
 
+    # TODO: test
     def get_man_path(self):
 
         path = []
@@ -163,7 +177,7 @@ class Piece:
 
         for dy, dx in directions:
             for i in (1, 2):
-                y, x = self.y + i*dy, self.x + i*dx
+                y, x = self.y + i * dy, self.x + i * dx
                 if 0 <= y and 0 <= x < self.BOARD_SIZE:
                     path.append(Point(y, x))
 

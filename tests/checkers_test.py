@@ -61,17 +61,17 @@ class MyTestCase(unittest.TestCase):
     def test_available_full_moves_state(self):
         self.brd.board[5][0] = Piece(5, 0, is_white=True, is_queen=False)
         self.brd.board[6][1] = Piece(6, 1, is_white=False, is_queen=False)
-        board_key = self.brd.simple_key(self.white_player)
+        board_key = self.brd.key(self.white_player)
         score_copy = copy.copy(self.brd.score)
         moves = self.brd.available_full_moves(self.white_player)
 
-        self.assertEqual(board_key, self.brd.simple_key(self.white_player),
+        self.assertEqual(board_key, self.brd.key(self.white_player),
                          msg='Board.full_available_moves() changes board state')
         self.assertCountEqual(score_copy, self.brd.score,
                          msg='Board.full_available_moves() changes score state')
 
 
-    def test_avaialble_moves(self):
+    def test_avaiable_moves(self):
         self.brd.board[5][5] = Piece(5, 5, is_white=True, is_queen=False)
         correct_moves = [Point(4, 6), Point(4, 4)]
         self.assertEqual(set(correct_moves), set(self.brd.board[5][5].available_moves(self.white_player, self.brd.board)))
@@ -89,12 +89,64 @@ class MyTestCase(unittest.TestCase):
         self.brd.board[6][1] = Piece(6, 1, is_white=True, is_queen=False)
         self.brd.board[4][5] = Piece(4, 5, is_white=True, is_queen=True)
         moves = self.brd.available_full_moves(self.black_player)
+        board_key = self.brd.key(self.black_player)
+        score_copy = copy.copy(self.brd.score)
+
 
 
         self.assertIn([Point(5, 0), Point(7, 2)], moves)
         self.assertIn([Point(5, 0), Point(7, 2), Point(3, 6)], moves)
         self.assertIn([Point(5, 0), Point(7, 2), Point(2, 7)], moves)
         self.assertNotIn([Point(5, 0), Point(7, 2), Point(4, 5)], moves)
+        self.assertEqual(board_key, self.brd.key(self.black_player),
+                         msg='Board.full_available_moves() changes board state')
+        self.assertCountEqual(score_copy, self.brd.score,
+                              msg='Board.full_available_moves() changes score state')
+
+    def test_count_pieces(self):
+        self.brd.board[5][0] = Piece(5, 0, is_white=True, is_queen=False)
+        self.brd.board[5][2] = Piece(5, 2, is_white=False, is_queen=False)
+        self.brd.board[5][4] = Piece(5, 4, is_white=False, is_queen=False)
+        self.brd.board[5][6] = Piece(5, 6, is_white=True, is_queen=False)
+        self.brd.board[1][0] = Piece(1, 0, is_white=False, is_queen=False)
+        self.brd.board[1][2] = Piece(1, 2, is_white=False, is_queen=False)
+        self.brd.board[1][4] = Piece(1, 4, is_white=True, is_queen=False)
+        self.brd.board[1][6] = Piece(1, 6, is_white=False, is_queen=False)
+        self.brd.count_pieces()
+        self.assertEqual([3, 5], self.brd.score)
+
+
+    def test_full_move_man(self):
+        self.brd.board[5][0] = Piece(5, 0, is_white=True, is_queen=False)
+        self.brd.board[4][1] = Piece(5, 2, is_white=False, is_queen=False)
+        self.brd.board[2][3] = Piece(5, 4, is_white=False, is_queen=False)
+        self.brd.board[2][5] = Piece(5, 6, is_white=True, is_queen=False)
+        self.assertTrue(self.brd.full_move(self.brd.white_player, [Point(5,0), Point(3, 2), Point(1,4), Point(3, 6)])[0])
+
+    def test_full_move_queen(self):
+        self.brd.board[7][0] = Piece(7, 0, is_white=True, is_queen=True)
+        self.brd.board[5][2] = Piece(5, 2, is_white=False, is_queen=False) # to 4, 3
+        self.brd.board[5][4] = Piece(5, 4, is_white=False, is_queen=False) # to 6, 5
+        self.brd.board[3][2] = Piece(3, 2, is_white=False, is_queen=False) # to 2, 1
+        self.brd.board[1][2] = Piece(1, 2, is_white=False, is_queen=False) # to 0, 3
+        self.assertTrue(
+            self.brd.full_move(self.white_player, [Point(7, 0), Point(4, 3), Point(6, 5), Point(2, 1), Point(0, 3)])[0])
+        self.brd.board[1][0] = Piece(1, 0, is_white=True, is_queen=True)
+        self.brd.board[5][4] = Piece(5, 2, is_white=False, is_queen=False)  # to 4, 3
+        self.brd.board[3][2] = Piece(3, 2, is_white=False, is_queen=False)  # to 2, 1
+        self.assertFalse(self.brd.full_move(self.white_player, [Point(1,0), Point(6,5)])[0])
+        self.brd.display()
+
+    # TODO:
+    def test_undo_capture(self):
+        self.brd.board[7][0] = Piece(7, 0, is_white=True, is_queen=True)
+        self.brd.board[5][2] = Piece(5, 2, is_white=False, is_queen=False)  # to 4, 3
+        self.brd.board[5][4] = Piece(5, 4, is_white=False, is_queen=False)  # to 6, 5
+        self.brd.board[3][2] = Piece(3, 2, is_white=False, is_queen=False)  # to 2, 1
+        self.brd.board[1][2] = Piece(1, 2, is_white=False, is_queen=False)  # to 0, 3
+        path = [Point(7, 0), Point(4, 3), Point(6, 5), Point(2, 1), Point(0, 3)]
+        captured = self.brd.full_move(self.white_player, path)[1]
+
 
 if __name__ == '__main__':
     unittest.main()

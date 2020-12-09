@@ -30,7 +30,7 @@ class Game:
             t_start = perf_counter_ns()
 
             move = self.brd.white_player.get_move(self.brd)
-            while not self.brd.full_move(self.brd.white_player, move):
+            while not self.brd.full_move(self.brd.white_player, move)[0]:
                 move = self.brd.white_player.get_move(self.brd)
 
             t_end = perf_counter_ns()
@@ -50,7 +50,7 @@ class Game:
             t_start = perf_counter_ns()
 
             move = self.brd.black_player.get_move(self.brd)
-            while not self.brd.full_move(self.brd.black_player, move):
+            while not self.brd.full_move(self.brd.black_player, move)[0]:
                 move = self.brd.black_player.get_move(self.brd)
 
             t_end = perf_counter_ns()
