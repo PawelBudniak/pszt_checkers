@@ -131,6 +131,7 @@ class Piece:
 
         return True
 
+    # TODO: test
     def available_moves(self, current_player, board, must_capture=None):
 
         path = []
@@ -149,6 +150,7 @@ class Piece:
 
         return path
 
+    # TODO: test
     def get_queen_path(self):
 
         path = []
@@ -165,6 +167,7 @@ class Piece:
                 x += dx
         return path
 
+    # TODO: test
     def get_man_path(self):
 
         path = []

@@ -18,13 +18,13 @@ def print_hi(name):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    # minmax.clear_cache()
-    # player2 = checkers.Player(is_white=True)6
-    # player1 =checkers.Player(is_white=False)
+    minmax.clear_cache()
+    # player2 = checkers.Player(is_white=True)
+    #player1 = checkers.Player(is_white=False)
     player2 = minmax.MinmaxAI(is_white=True, nocache=True)
     player1 = minmax.MinmaxAI(is_white=False, opponent=player2, depth=6, nocache=False, noab=False, nosort=False)
     player2.opponent = player1
-    player2.depth = 1
+    player2.depth = 6
     game = game.Game(player2, player1)
     game.play(show_display=True, cache_black_player=False, cache_white_player=False, testing=True)
 
