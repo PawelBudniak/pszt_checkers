@@ -21,6 +21,12 @@ class Board:
         self.white_player = white_player
         self.black_player = black_player
 
+    def set(self, other):
+        self.board = other.board
+        self.white_queen_moves = other.white_queen_moves
+        self.black_queen_moves = other.white_queen_moves
+        self.score = other.score
+
     def is_draw(self):
         return self.white_queen_moves >= 15 and self.black_queen_moves >= 15
 
@@ -44,12 +50,14 @@ class Board:
 
     def full_move(self, player, chosen_path):
         if not chosen_path:
-            print('chosen_path')
             return False, None
+
+        if chosen_path[0] == "quit":
+            print("Quiting...")
+            exit(0)
 
         if not isinstance(player, MinmaxAI):
             if self.try_full_move(player, chosen_path) is False:
-                print('try full')
                 return False, None
 
         begin_score = copy.deepcopy(self.score)
@@ -60,7 +68,6 @@ class Board:
 
             result, captured_piece = self.move(player, move_from, move_to)
             if not result:
-                print("absolute disgrace!@@@@@@@@@@@@@@@@")
                 return False, captured_pieces
             move_from = move_to
             if captured_piece is not None:
@@ -90,22 +97,23 @@ class Board:
             # if the piece should capture but it doesnt
             if len(chosen_path) == 2 and should_capture and result is False:
                 # print("1. " + str(start_point) + "2. " + str(point))
-                self = begin_state
+                self.set(begin_state)
                 return False
 
             # if the piece is trying to traverse when moving more than one time
             if len(chosen_path) != 2 and result is False:
-                self = begin_state
+                self.set(begin_state)
                 return False
 
             # if the piece is not capturing when path is longer than 2
-            if result is None and point != chosen_path[len(chosen_path) - 1]:
-                self = begin_state
+            if result is None:
+                self.set(begin_state)
                 return False
             self.move(player, start_point, point)
             start_point = point
-        self = begin_state
+        self.set(begin_state)
         return True
+
 
     def _should_capture(self, player):
         for piece in self.get_pieces(player):
@@ -125,7 +133,7 @@ class Board:
         from_piece = self.board[start.y][start.x]
         available_move, captured_piece = from_piece.try_move(to, player, self.board)
 
-        if available_move is not None:
+        if available_move != Move.Unavailable:
             self._execute_move(available_move, player, start, to, captured_piece)
             return True, captured_piece  # successful action
 

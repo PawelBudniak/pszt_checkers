@@ -1,6 +1,7 @@
 
 import checkers
 import player
+from minmax import *
 from time import perf_counter_ns
 
 class Game:
@@ -31,6 +32,10 @@ class Game:
 
             move = self.brd.white_player.get_move(self.brd)
             while not self.brd.full_move(self.brd.white_player, move)[0]:
+                if show_display and not isinstance(self.brd.black_player, MinmaxAI):
+                    print("Not a viable option!\n")
+                    self.brd.display()
+                    print(f'scores = {self.brd.score}')
                 move = self.brd.white_player.get_move(self.brd)
 
             t_end = perf_counter_ns()
@@ -51,6 +56,10 @@ class Game:
 
             move = self.brd.black_player.get_move(self.brd)
             while not self.brd.full_move(self.brd.black_player, move)[0]:
+                if show_display and not isinstance(self.brd.black_player, MinmaxAI):
+                    self.brd.display()
+                    print("Not a viable option!\n")
+                    print(f'scores = {self.brd.score}')
                 move = self.brd.black_player.get_move(self.brd)
 
             t_end = perf_counter_ns()
