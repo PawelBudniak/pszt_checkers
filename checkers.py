@@ -209,7 +209,6 @@ class Board:
         if not captures:
             return [[start]]
 
-       # original_board = self.board
         score_copy = copy.copy(self.score)
         tree = []
 
@@ -226,20 +225,19 @@ class Board:
 
             # restore board state after move
             self.undo_capture(capturing_piece, captured_piece, capture)
-            # self.board[start.y][start.x] = capturing_piece
-            # self.board[captured_piece.y][captured_piece.x] = captured_piece
-            # self.board[capture.y][capture.x] = None
 
-
-        #self.board = original_board
         tree.append([start])
         self.score = score_copy
         return tree
 
 
     def undo_capture(self, capturing, captured, destination):
+
         self.board[capturing.y][capturing.x] = capturing
         self.board[captured.y][captured.x] = captured
+
+        # remove the piece from the point it jumped to, except when it made a circular combo capture and came back
+        # to its starting point
         if destination != capturing.to_point():
             self.board[destination.y][destination.x] = None
 

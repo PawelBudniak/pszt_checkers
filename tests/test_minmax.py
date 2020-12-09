@@ -44,7 +44,7 @@ class MyTestCase(unittest.TestCase):
 
         def test_minmax_board_state2(self):
             self.white_player = MinmaxAI(is_white=True)
-            self.minmax = MinmaxAI(is_white=False, depth=3, opponent=self.white_player)
+            self.minmax = MinmaxAI(is_white=False, depth=5, opponent=self.white_player)
             self.brd = Board(self.white_player, self.minmax)
 
             self.brd.init_board()

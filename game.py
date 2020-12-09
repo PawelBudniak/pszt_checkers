@@ -84,6 +84,6 @@ class Game:
             print("A draw")
         print("Game time: " + str(self.game_time) + "ms turn count: " + str(self.turn_count))
         print("White player average move time: "
-              + str(int(self.white_move_time / (1000000 * self.white_move_count))) + "ms")
+              + str((self.white_move_time / (1000000 * self.white_move_count))) + "ms")
         print("Black player move count: average move time: "
-              + str(int(self.black_move_time / (1000000 * self.black_move_count))) + "ms")
+              + str((self.black_move_time / (1000000 * self.black_move_count))) + "ms")

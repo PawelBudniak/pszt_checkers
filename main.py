@@ -22,7 +22,7 @@ if __name__ == '__main__':
     # player2 = checkers.Player(is_white=True)
     # player1 =checkers.Player(is_white=False)
     player2 = minmax.MinmaxAI(is_white=True, nocache=True)
-    player1 = minmax.MinmaxAI(is_white=False, opponent=player2, depth=9, nocache=True, noab=False, nosort=True)
+    player1 = minmax.MinmaxAI(is_white=False, opponent=player2, depth=10, nocache=False, noab=False, nosort=False)
     player2.opponent = player1
     player2.depth = 1
     game = game.Game(player2, player1)
