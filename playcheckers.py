@@ -53,7 +53,6 @@ if __name__ == '__main__':
         player2 = Player(is_white=False)
 
     if '-clearcache' in sys.argv:
-        print('seiam')
         minmax.clear_cache()
 
 
